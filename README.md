@@ -33,3 +33,30 @@ Sets syncblockindex of `obj1` to syncblockindex of `obj2`
     a.SetMethodTable(b.GetMethodTable());
     
 Makes object of type A as type B.
+
+Following code will enumerate all objects in SOH (Small Objects Heap) between two objects, which passed via params:
+
+
+    object a = new object();
+				
+    List<object> objects = new List<object>();
+				
+    for(int i = 0; i < 100000; i++)
+    	objects.Add(new object());
+				
+    long count = 0, cursize = 0, size = 0;
+				
+    foreach(var cur in GCEx.GetObjectsInSOH(a))
+    {
+        cursize = GCEx.SizeOf(cur);
+        size += cursize;					
+        count++;
+    }
+    Console.WriteLine(" - sum: {0}, count: {1}", size, count);
+
+`cur` is object and can be casted to its Type
+Program outputs:
+
+     - sum: 1331328, count: 100017
+     
+Of course, some objects, like arrays, which have lost roots can be GC collected before our loop.
