@@ -37,7 +37,7 @@ Makes object of type A as type B.
 Following code will enumerate all objects in SOH (Small Objects Heap) between two objects, which passed via params:
 
 
-    object a = new object();
+    object startingObject = new object(); // can be created at app startup, but library works good only in one Ephemeral Segment (16M)
 				
     List<object> objects = new List<object>();
 				
@@ -46,7 +46,7 @@ Following code will enumerate all objects in SOH (Small Objects Heap) between tw
 				
     long count = 0, cursize = 0, size = 0;
 				
-    foreach(var cur in GCEx.GetObjectsInSOH(a))
+    foreach(var cur in GCEx.GetObjectsInSOH(startingObject)) // final object can be passed as second parameter, but if not, `GetObjectsInSOH` will create it
     {
         cursize = GCEx.SizeOf(cur);
         size += cursize;					
