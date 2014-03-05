@@ -7,13 +7,13 @@ namespace System.Runtime.CLR
 {
 	public static class GCEx
 	{
-		static int majorNetVersion;
-		static int stringTypeHandler;
+		static readonly int MajorNetVersion;
+		static readonly int StringTypeHandler;
 		
 		static GCEx()
 		{
-			majorNetVersion = System.Environment.Version.Major;
-			stringTypeHandler = typeof(string).TypeHandle.Value.ToInt32();
+			MajorNetVersion = Environment.Version.Major;
+			StringTypeHandler = typeof(string).TypeHandle.Value.ToInt32();
 		}
 		
 		public static unsafe EntityInfo *GetEntityInfo(this object obj)
@@ -45,7 +45,7 @@ namespace System.Runtime.CLR
 		/// Sets private GC object's field EEClass, which is actually describes current class pointer
 		/// </summary>
 		/// <param name="obj">Object with SyncBlockIndex to be changed</param>
-		/// <param name="syncBlockIndex">New value of SyncBlockIndex</param>
+		/// <param name="methodTable">New value of MathodTable pointer</param>
 		public static unsafe void SetMethodTable(this object obj, MethodTableInfo *methodTable)
 		{
 			var contents = (EntityInfo*)(EntityPtr.ToHandler(obj));
@@ -71,21 +71,20 @@ namespace System.Runtime.CLR
 				return arrayinfo->SizeOf();
 			} 
 			else
-			if(((int)entity->MethodTable) == stringTypeHandler)
+			if(((int)entity->MethodTable) == StringTypeHandler)
 			{
 				// TODO: on 4th nedds to be tested
-				if(majorNetVersion >= 4)
+				if(MajorNetVersion >= 4)
 				{
-					int length = *(int *)((int)entity + 8);
+					var length = *(int *)((int)entity + 8);
 					var str = EntityPtr.ToInstance<string>((int)entity);
 					return 4 * ((14 + 2 * length + 3) / 4);
 				} 
 				else
 				{
 					 // on 1.0 -> 3.5 string have additional RealLength field
-					int length = *(int *)((int)entity + 12);
+					var length = *(int *)((int)entity + 12);
 					var str = EntityPtr.ToInstance<string>((int)entity);
-					Console.WriteLine("[{0}]", str);
 					return 4 * ((16 + 2 * length + 3) / 4);
 				}
 			} else
@@ -111,12 +110,11 @@ namespace System.Runtime.CLR
 		{
 			unsafe
 			{
-				IntPtr pointer = Marshal.AllocHGlobal(SizeOf<T>());
+				var pointer = Marshal.AllocHGlobal(SizeOf<T>());
 				var mTable = (MethodTableInfo *)typeof(T).TypeHandle.Value.ToInt32();
-				var pp = new EntityPtr();
-							
-				pp.Handler = pointer.ToInt32();
-				pp.Object.SetMethodTable(mTable);
+			    var pp = new EntityPtr(pointer);
+
+			    pp.Object.SetMethodTable(mTable);
 			
 				return (T)pp.Object;
 			}
@@ -129,8 +127,6 @@ namespace System.Runtime.CLR
 			try
 			{
 				var pointer = new EntityPtr { Object = current };
-				var entity =  current.GetEntityInfo();				
-				var methodTable = entity->MethodTable;
 				
 				size = SizeOf(pointer.Object);
 				pointer.Handler += size;
@@ -141,12 +137,11 @@ namespace System.Runtime.CLR
 				current = pointer.Object;				
 				nextObject = current;
 				return true;
-			} catch (COMException ex)
+			} catch
 			{
 				size = 0;
 				return false;
 			}
-			return false;
 		}
 
 		public static IEnumerable<object> GetObjectsInSOH(object starting)
@@ -157,9 +152,8 @@ namespace System.Runtime.CLR
 		public static IEnumerable<object> GetObjectsInSOH(object starting, object last)
 		{
 			var current = starting;
-			var pointer = new EntityPtr { Object = current };
 			int size = 0;
-			int cursize = GCEx.SizeOf(starting);			
+			int cursize = SizeOf(starting);			
 			
 			do
 			{

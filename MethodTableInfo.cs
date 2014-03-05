@@ -1,14 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: SSidristy
- * Date: 01.03.2014
- * Time: 10:57
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
-using System.Collections;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
 {
@@ -87,8 +77,9 @@ namespace System.Runtime.CLR
 		[FieldOffset(12)]
 	    public MethodTableInfo *MethodsTable;
 	}
-	
-	[Flags]
+
+    // ReSharper disable InconsistentNaming
+    [Flags]
 	public enum MethodTableFlags : uint
 	{
 		Array                       = 0x00010000,
@@ -128,24 +119,26 @@ namespace System.Runtime.CLR
         NonTrivialInterfaceCast     = Array |
                                                 TransparentProxy,
 	}
-	    /*
-	    public int CCtorSlot;
+    // ReSharper restore InconsistentNaming
+    
+    /*
+    public int CCtorSlot;
 	    
-	    public int DefaultCtorSlot;
+    public int DefaultCtorSlot;
 	    
-	    public byte NormType;
+    public byte NormType;
 	    
-	    public ushort NumInstanceFields; 
+    public ushort NumInstanceFields; 
 
-		public ushort NumStaticFields; 
+    public ushort NumStaticFields; 
 
-		public ushort NumHandleStatics;
+    public ushort NumHandleStatics;
 
-		public ushort NumBoxedStatics; 
+    public ushort NumBoxedStatics; 
 
-        public ushort NumGCPointerSeries; 
-        /*
-         * DWORD m_cbModuleDynamicID; 
+    public ushort NumGCPointerSeries; 
+    /*
+     * DWORD m_cbModuleDynamicID; 
 
 DWORD m_cbNonGCStaticFieldBytes; 
 DWORD m_dwNumInstanceFieldBytes; 
@@ -156,5 +149,5 @@ SecurityProperties m_SecProps;
 PTR_MethodDescChunk m_pChunks; 
 BitMask m_classDependencies; 
 DWORD m_dwReliabilityContract;
-         */	
+     */	
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Runtime.InteropServices;
-using System.Threading;
+﻿using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
 {

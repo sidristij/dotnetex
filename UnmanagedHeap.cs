@@ -1,14 +1,4 @@
-﻿/*
- * Created by SharpDevelop.
- * User: SSidristy
- * Date: 03.03.2014
- * Time: 15:57
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
-using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
@@ -18,55 +8,51 @@ namespace System.Runtime.CLR
 	/// </summary>
 	public unsafe class UnmanagedHeap<T> //where T:new()
 	{
-		private Queue<WeakReference> freeObjects;
-		private List<WeakReference> allObjects;
-		private ConstructorInfo ctor;
-		private int totalSize;
+		private readonly Queue<WeakReference> _freeObjects;
+		private readonly List<WeakReference> _allObjects;
+		private readonly int _totalSize;
 		
 		public unsafe UnmanagedHeap(int capacity)
 		{
-			freeObjects = new Queue<WeakReference>(capacity);
-			allObjects = new List<WeakReference>(capacity);
+		    _freeObjects = new Queue<WeakReference>(capacity);
+			_allObjects = new List<WeakReference>(capacity);
 			
-			int objectSize = GCEx.SizeOf<T>();
-			totalSize = objectSize * capacity;
+			var objectSize = GCEx.SizeOf<T>();
+			_totalSize = objectSize * capacity;
 			
-			var startingPointer = Marshal.AllocHGlobal(totalSize).ToInt32();
+			var startingPointer = Marshal.AllocHGlobal(_totalSize).ToInt32();
 			var mTable = (MethodTableInfo *)typeof(T).TypeHandle.Value.ToInt32();
 			
 			var ptr = new EntityPtr();			
-			var ctor = typeof(T).GetConstructor(Type.EmptyTypes);
+			// var ctor = typeof(T).GetConstructor(Type.EmptyTypes);
 			
 			for(int i = 0; i < capacity; i++)
 			{
 				ptr.Handler =  startingPointer + (objectSize * i);
 				ptr.Object.SetMethodTable(mTable);
 				var reference = new WeakReference(ptr.Object);
-				freeObjects.Enqueue(reference);
-				allObjects.Add(reference);
+				_freeObjects.Enqueue(reference);
+				_allObjects.Add(reference);
 			}
 		}
 		
 		public int TotalSize
 		{
-			get {
-				return totalSize;
+			get 
+            {
+				return _totalSize;
 			}
 		}
 		
 		public T Allocate()
 		{			
-			var obj = freeObjects.Dequeue().Target;
-			if(ctor != null)
-			{
-				;//ctor.Invoke(obj, new object[0]);
-			}
+			var obj = _freeObjects.Dequeue().Target;
 			return (T)obj;
 		}
 		
 		public void Free(T obj)
 		{
-			freeObjects.Enqueue(new WeakReference(obj));			
+			_freeObjects.Enqueue(new WeakReference(obj));			
 		}	
 	}
 }

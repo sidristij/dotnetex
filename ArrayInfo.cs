@@ -6,8 +6,6 @@
  * 
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
-using System;
-using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
@@ -37,92 +35,84 @@ namespace System.Runtime.CLR
 			}
 		}
 	
-		public unsafe int Dimensions
+		public int Dimensions
 		{
 			get 
 			{
 				if(IsMultidimentional)
 				{
-					unsafe {
-						fixed(int *cur = &Lengthes)
-						{
-							int count = 0;
-							while(cur[count] != 0) count++;
-							return count;
-						}
+					fixed(int *cur = &Lengthes)
+					{
+						int count = 0;
+						while(cur[count] != 0) count++;
+						return count;
 					}
 				}
-				else
-				{
-					return 1;				
-				}
+				
+                return 1;				
 			}
 		}
 		
-		public unsafe int GetLength(int dim)
+		public int GetLength(int dim)
 		{
-			int max_dim = Dimensions;
-			if(max_dim < dim)
+			var maxDim = Dimensions;
+			if(maxDim < dim)
 				throw new ArgumentOutOfRangeException("dim");
 			
-			unsafe {
-				fixed(int *addr = &Lengthes)
-				{
-					return addr[dim];
-				}
+			fixed(int *addr = &Lengthes)
+			{
+				return addr[dim];
 			}
 		}
 		
-		public unsafe int SizeOf()
+		public int SizeOf()
 		{
-			int total = 0;
-			
-			int elementsize = 0;
-			unsafe {
-				fixed(EntityInfo *entity = &BasicInfo)
+			var total = 0;
+			var elementsize = 0;
+
+			fixed(EntityInfo *entity = &BasicInfo)
+			{
+				var pp = new EntityPtr { Handler = (int)entity };
+				var arr = pp.Object as Array;
+				if(IsValueTypes)
 				{
-					var pp = new EntityPtr { Handler = (int)entity };
-					var arr = pp.Object as Array;
-					if(IsValueTypes)
-					{
-						var elementType = arr.GetType().GetElementType();
-						var typecode = Type.GetTypeCode(elementType);
+					var elementType = arr.GetType().GetElementType();
+					var typecode = Type.GetTypeCode(elementType);
 						
-						switch(typecode)
-						{
-							case TypeCode.Byte:
-							case TypeCode.SByte:
-							case TypeCode.Boolean:
-								elementsize = 1;
-								break;
-							case TypeCode.Int16:
-							case TypeCode.UInt16:
-							case TypeCode.Char:
-								elementsize = 2;
-								break;
-							case TypeCode.Int32:
-							case TypeCode.UInt32:
-							case TypeCode.Single:
-								elementsize = 4;
-								break;
-							case TypeCode.Int64:
-							case TypeCode.UInt64:
-							case TypeCode.Double:
-								elementsize = 8;
-								break;
-							case TypeCode.Decimal:
-								elementsize = 12;
-								break;
-							default:
-								var info = (MethodTableInfo *)elementType.TypeHandle.Value;
-								elementsize = (int)info->Size - sizeof(EntityInfo);
-								break;
-						}						
-					}
-					else 
+					switch(typecode)
 					{
-						elementsize = IntPtr.Size;
-					}
+						case TypeCode.Byte:
+						case TypeCode.SByte:
+						case TypeCode.Boolean:
+							elementsize = 1;
+							break;
+						case TypeCode.Int16:
+						case TypeCode.UInt16:
+						case TypeCode.Char:
+							elementsize = 2;
+							break;
+						case TypeCode.Int32:
+						case TypeCode.UInt32:
+						case TypeCode.Single:
+							elementsize = 4;
+							break;
+						case TypeCode.Int64:
+						case TypeCode.UInt64:
+						case TypeCode.Double:
+							elementsize = 8;
+							break;
+						case TypeCode.Decimal:
+							elementsize = 12;
+							break;
+						default:
+							var info = (MethodTableInfo *)elementType.TypeHandle.Value;
+							elementsize = info->Size - sizeof(EntityInfo);
+							break;
+					}						
+				}
+				else 
+				{
+					elementsize = IntPtr.Size;
 				}
 			}
 			// Header
