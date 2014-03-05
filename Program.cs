@@ -2,7 +2,9 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections.Generic;
-using CLREx;
+using System.Runtime.CLR;
+using System.Data;
+using System.Linq;
 
 namespace ConsoleTest
 {
@@ -29,23 +31,35 @@ namespace ConsoleTest
 		}
 		
 		public unsafe static void Main(string[] args)
-		{				
-			unsafe {
+		{
+			var a = new object();
 				
-				object a = new object(), b = new object();
-				var arr = new byte[4];
-				var arr2 = new Dictionary<byte, DateTime>();
-				int size = 0;
-				int cursize = 0;
-				foreach(var cur in GCEx.GetObjectsInSOH(a))
+			var heap = new UnmanagedHeap<Dictionary<Type, int>>(100);
+			var list = new List<object>(100);
+			
+			for(int i = 0; i < 100; i++)
+			{
+				list.Add(heap.Allocate());
+			}
+			
+			int count = 0, cursize = 0, size = 0;
+
+			foreach(var cur in GCEx.GetObjectsInSOH(a))
+			{
+				cursize = GCEx.SizeOf(cur);
+				
+				if(cur is UnmanagedHeap<Dictionary<Type, int>>)
 				{
-					cursize = GCEx.SizeOf(cur);
-					size += cursize;
-					Console.WriteLine(" - sum: {0}, cur: {1}, object: {2}", cursize, size, cur);
+					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to heap of [{2}] size", (int)cur.GetEntityInfo(), cur.GetType().Name, (cur as UnmanagedHeap<Dictionary<Type, int>>).TotalSize );
+				} else {
+					Console.WriteLine("At [0x{0:X}] Type found: {1}", (int)cur.GetEntityInfo(), cur.GetType().Name);
 				}
-				
-				Console.ReadKey();
-			};
+				size += cursize;					
+				count++;
+			}
+			
+			Console.WriteLine(" - sum: {0}, count: {1}", size, count);
+			Console.ReadKey();
 		}
 		
 		private static void TestSyncBIAndEEClassChanging()

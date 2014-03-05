@@ -55,9 +55,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArrayInfo.cs" />
+    <Compile Include="EntityPtr.cs" />
     <Compile Include="MethodTableInfo.cs" />
     <Compile Include="GCEx.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UnmanagedHeap.cs" />
   </ItemGroup>
 </Project>

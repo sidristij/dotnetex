@@ -1,72 +1,35 @@
 ﻿using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace CLREx
+namespace System.Runtime.CLR
 {
 	public static class GCEx
 	{
-		[StructLayout(LayoutKind.Explicit)]
-		public struct EntityPtr
+		static int majorNetVersion;
+		static int stringTypeHandler;
+		
+		static GCEx()
 		{
-			[FieldOffset(0)]
-			internal object Object;
-			
-			[FieldOffset(4)]
-			private int _pointer;
-			
-			internal unsafe int Pointer
-			{
-				get {
-					fixed(int *pp = &_pointer)
-					{
-						return *(int *)((int)pp - sizeof(int)) - sizeof(int);
-					}
-				}
-				
-				set {
-					fixed(int *pp = &_pointer)
-					{
-						*(int *)((int)pp - sizeof(int)) = value + sizeof(int);
-					}
-				}
-			}
-		}
-	
-		public static unsafe EntityInfo *GetGCFields(this object obj)
-		{
-			return (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);
+			majorNetVersion = System.Environment.Version.Major;
+			stringTypeHandler = typeof(string).TypeHandle.Value.ToInt32();
 		}
 		
-		/// <summary>
-		/// Gets private GC object's fields SyncBlockIndex and EEClass struct pointer
-		/// </summary>
-		public static unsafe void GetGCFields(this object obj, out int syncBlockIndex, out MethodTableInfo *methodtable)
+		public static unsafe EntityInfo *GetEntityInfo(this object obj)
 		{
-			var contents = (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);
-			syncBlockIndex = contents->SyncBlockIndex;
-			methodtable = contents->MethodTable;
+			return (EntityInfo*)EntityPtr.ToHandler(obj);
 		}
 		
-					
 		/// <summary>
 		/// Gets private GC object's fields SyncBlockIndex and EEClass struct pointer
 		/// </summary>
 		public static unsafe int GetSyncBlockIndex(this object obj)
 		{
-			var contents = (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);
+			var contents = (EntityInfo*)EntityPtr.ToHandler(obj);
 			return contents->SyncBlockIndex;
 		}
-					
-		/// <summary>
-		/// Gets private GC object's fields SyncBlockIndex and EEClass struct pointer
-		/// </summary>
-		public static unsafe EntityInfo *GetEntityInfo(this object obj)
-		{
-			return (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);			
-		}
-		
+				
 		/// <summary>
 		/// Sets private GC object's field SyncBlockIndex, which is actually index in private GC table.
 		/// </summary>
@@ -74,7 +37,7 @@ namespace CLREx
 		/// <param name="syncBlockIndex">New value of SyncBlockIndex</param>
 		public static unsafe void SetSyncBlockIndex(this object obj, int syncBlockIndex)
 		{
-			var contents = (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);
+			var contents = (EntityInfo*)(EntityPtr.ToHandler(obj));
 			contents->SyncBlockIndex = syncBlockIndex;
 		}
 					
@@ -85,14 +48,13 @@ namespace CLREx
 		/// <param name="syncBlockIndex">New value of SyncBlockIndex</param>
 		public static unsafe void SetMethodTable(this object obj, MethodTableInfo *methodTable)
 		{
-			var contents = (EntityInfo*)((new EntityPtr { Object = obj }).Pointer);
+			var contents = (EntityInfo*)(EntityPtr.ToHandler(obj));
 			contents->MethodTable = methodTable;
 		}
 		
 		public static unsafe Int32 SizeOf(this object obj)
 		{
-			var pointer = new EntityPtr { Object = obj };
-			return SizeOf((EntityInfo *)(pointer.Pointer));
+			return SizeOf((EntityInfo *)EntityPtr.ToHandler(obj));
 		}
 		
 		/// <summary>
@@ -100,12 +62,33 @@ namespace CLREx
 		/// </summary>
 		public static unsafe int SizeOf(EntityInfo *entity)
 		{
+			if((int)entity->MethodTable == 0)
+				throw new ArgumentException("entity have nil in MethodTable (??)");
+			
 			if((entity->MethodTable->Flags & MethodTableFlags.Array) != 0)
 			{
 				var arrayinfo = (ArrayInfo *)entity;
 				return arrayinfo->SizeOf();
 			} 
-			else 
+			else
+			if(((int)entity->MethodTable) == stringTypeHandler)
+			{
+				// TODO: on 4th nedds to be tested
+				if(majorNetVersion >= 4)
+				{
+					int length = *(int *)((int)entity + 8);
+					var str = EntityPtr.ToInstance<string>((int)entity);
+					return 4 * ((14 + 2 * length + 3) / 4);
+				} 
+				else
+				{
+					 // on 1.0 -> 3.5 string have additional RealLength field
+					int length = *(int *)((int)entity + 12);
+					var str = EntityPtr.ToInstance<string>((int)entity);
+					Console.WriteLine("[{0}]", str);
+					return 4 * ((16 + 2 * length + 3) / 4);
+				}
+			} else
 			{
 				return entity->MethodTable->Size;
 			}
@@ -132,7 +115,7 @@ namespace CLREx
 				var mTable = (MethodTableInfo *)typeof(T).TypeHandle.Value.ToInt32();
 				var pp = new EntityPtr();
 							
-				pp.Pointer = pointer.ToInt32();
+				pp.Handler = pointer.ToInt32();
 				pp.Object.SetMethodTable(mTable);
 			
 				return (T)pp.Object;
@@ -150,7 +133,10 @@ namespace CLREx
 				var methodTable = entity->MethodTable;
 				
 				size = SizeOf(pointer.Object);
-				pointer.Pointer += size;
+				pointer.Handler += size;
+				
+				if(*(int *)(pointer.Handler + 4) == 0)
+					return false;
 				
 				current = pointer.Object;				
 				nextObject = current;
@@ -163,12 +149,12 @@ namespace CLREx
 			return false;
 		}
 
-		public static IEnumerable GetObjectsInSOH(object starting)
+		public static IEnumerable<object> GetObjectsInSOH(object starting)
 		{
 			return GetObjectsInSOH(starting, new object());
 		}
 		
-		public static IEnumerable GetObjectsInSOH(object starting, object last)
+		public static IEnumerable<object> GetObjectsInSOH(object starting, object last)
 		{
 			var current = starting;
 			var pointer = new EntityPtr { Object = current };

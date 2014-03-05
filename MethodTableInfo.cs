@@ -10,7 +10,7 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace CLREx
+namespace System.Runtime.CLR
 {
 	[StructLayout(LayoutKind.Explicit)]
 	public unsafe struct EntityInfo
@@ -19,7 +19,7 @@ namespace CLREx
 		public int SyncBlockIndex;
 
 		[FieldOffset(4)]
-		public MethodTableInfo *MethodTable;
+		public MethodTableInfo *MethodTable;				
 	}
 	
 	[StructLayout(LayoutKind.Explicit)]

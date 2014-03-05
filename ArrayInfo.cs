@@ -10,7 +10,7 @@ using System;
 using System.Collections;
 using System.Runtime.InteropServices;
 
-namespace CLREx
+namespace System.Runtime.CLR
 {
 	[StructLayout(LayoutKind.Explicit)]
 	public unsafe struct ArrayInfo
@@ -81,7 +81,7 @@ namespace CLREx
 			unsafe {
 				fixed(EntityInfo *entity = &BasicInfo)
 				{
-					var pp = new GCEx.EntityPtr { Pointer = (int)entity };
+					var pp = new EntityPtr { Handler = (int)entity };
 					var arr = pp.Object as Array;
 					if(IsValueTypes)
 					{
