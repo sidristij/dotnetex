@@ -33,18 +33,64 @@ namespace ConsoleTest
 		public unsafe static void Main(string[] args)
 		{
 			var a = new object();
-				
-			var heap = new UnmanagedHeap<Dictionary<Type, int>>(100);
-			var list = new List<object>(100);
-			
-			for(int i = 0; i < 100; i++)
-			{
-				list.Add(heap.Allocate());
-			}
+			var list = new List<Dictionary<int, int>>(1);
+			var b = new object();
 			
 			int count = 0, cursize = 0, size = 0;
 
 			foreach(var cur in GCEx.GetObjectsInSOH(a))
+			{
+				cursize = GCEx.SizeOf(cur);
+				if(cur is Array)
+				{
+					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to array of [{2}] size, len={3}", (int)cur.GetEntityInfo(), cur.GetType().Name, ((ArrayInfo *)EntityPtr.ToHandler(cur))->SizeOf(), (cur as Array).Length);
+				}else
+				if(cur is UnmanagedHeap<Dictionary<Type, int>>)
+				{
+					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to heap of [{2}] size", (int)cur.GetEntityInfo(), cur.GetType().Name, (cur as UnmanagedHeap<Dictionary<Type, int>>).TotalSize );
+				} else {
+					Console.WriteLine("At [0x{0:X}] Type found: {1}", (int)cur.GetEntityInfo(), cur.GetType().Name);
+				}
+				size += cursize;					
+				count++;
+			}
+			
+			Console.WriteLine(" - sum: {0}, count: {1}", size, count);
+			
+			for(int i = 0; i < 1000; i++)
+				list.Add(new Dictionary<int, int>());
+			
+			//Console.WriteLine("========");
+			
+			count = 0; cursize = 0; size = 0;;
+
+			foreach(var cur in GCEx.GetObjectsInSOH(a))
+			{
+				cursize = GCEx.SizeOf(cur);
+				if(cur is Array)
+				{
+					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to array of [{2}] size, len={3}", (int)cur.GetEntityInfo(), cur.GetType().Name, ((ArrayInfo *)EntityPtr.ToHandler(cur))->SizeOf(), (cur as Array).Length);
+				}else
+				if(cur is UnmanagedHeap<Dictionary<Type, int>>)
+				{
+					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to heap of [{2}] size", (int)cur.GetEntityInfo(), cur.GetType().Name, (cur as UnmanagedHeap<Dictionary<Type, int>>).TotalSize );
+				} else {
+					Console.WriteLine("At [0x{0:X}] Type found: {1}", (int)cur.GetEntityInfo(), cur.GetType().Name);
+				}
+				size += cursize;					
+				count++;
+			}
+			
+			Console.WriteLine(" - sum: {0}, count: {1}", size, count);
+			
+			Console.ReadKey();
+		}
+		
+		private static unsafe void EnumerateAllFrom(object starting)
+		{
+			int count = 0, cursize = 0, size = 0;
+
+			foreach(var cur in GCEx.GetObjectsInSOH(starting))
 			{
 				cursize = GCEx.SizeOf(cur);
 				
@@ -59,7 +105,6 @@ namespace ConsoleTest
 			}
 			
 			Console.WriteLine(" - sum: {0}, count: {1}", size, count);
-			Console.ReadKey();
 		}
 		
 		private static void TestSyncBIAndEEClassChanging()
