@@ -1,11 +1,5 @@
-﻿/*
- * Created by SharpDevelop.
- * User: SSidristy
- * Date: 01.03.2014
- * Time: 10:57
- * 
- * To change this template use Tools | Options | Coding | Edit Standard Headers.
- */
+﻿
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
@@ -68,15 +62,16 @@ namespace System.Runtime.CLR
 		public int SizeOf()
 		{
 			var total = 0;
-			var elementsize = 0;
+			int elementsize;
 
 			fixed(EntityInfo *entity = &BasicInfo)
 			{
 				var pp = new EntityPtr { Handler = (int)entity };
 				var arr = pp.Object as Array;
+
 				if(IsValueTypes)
 				{
-					var elementType = arr.GetType().GetElementType();
+				    var elementType = arr.GetType().GetElementType();
 					var typecode = Type.GetTypeCode(elementType);
 						
 					switch(typecode)
