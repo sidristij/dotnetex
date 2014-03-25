@@ -3,7 +3,7 @@
 namespace System.Runtime.CLR
 {
 	[StructLayout(LayoutKind.Explicit)]
-	public struct EntityPtr
+	public struct EntityPtr2
 	{
 		[FieldOffset(0)]
 		public object Object;
@@ -11,17 +11,17 @@ namespace System.Runtime.CLR
 		[FieldOffset(4)]
 		private int _handler;
 		
-		public EntityPtr(int handler)
+		public EntityPtr2(int handler)
 		{
 			Object = null; _handler = 0;
 			Handler = handler;
 		}
 		
-		public EntityPtr(IntPtr handler) : this(handler.ToInt32())
+		public EntityPtr2(IntPtr handler) : this(handler.ToInt32())
 		{			
 		}
 		
-		public EntityPtr(object @object)
+		public EntityPtr2(object @object)
 		{
 			_handler = 0;
 			Object = @object;
@@ -46,13 +46,13 @@ namespace System.Runtime.CLR
 		
 		public static int ToHandler(object obj)
 		{
-			var entity = new EntityPtr(obj);
+			var entity = new EntityPtr2(obj);
 			return entity.Handler;
 		}
 				
 		public static T ToInstance<T>(int handler) where T:class
 		{
-			var entity = new EntityPtr(handler);
+			var entity = new EntityPtr2(handler);
 			return (T)entity.Object;
 		}
 	}

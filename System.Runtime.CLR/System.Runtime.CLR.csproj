@@ -4,7 +4,7 @@
     <ProjectGuid>{E3BC3AE5-C2AB-442E-B649-C37E7982207E}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>System.Runtime.CLR</RootNamespace>
     <AssemblyName>System.Runtime.CLR</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
@@ -68,8 +68,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <ItemGroup>
+    <Reference Include="EntityPtr">
+      <HintPath>..\libs\EntityPtr.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -87,7 +93,6 @@
     <Compile Include="ArrayInfo.cs" />
     <Compile Include="EntityPtr.cs" />
     <Compile Include="FrameworkVersions.cs" />
-    <Compile Include="GCCritical.cs" />
     <Compile Include="GCEx.cs" />
     <Compile Include="MethodTableInfo.cs" />
     <Compile Include="MethodUtil.cs" />
@@ -114,5 +119,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="VirtualFolder\EntityPtr.il">
+      <Generator>ilasm</Generator>
+    </None>
   </ItemGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
 </Project>

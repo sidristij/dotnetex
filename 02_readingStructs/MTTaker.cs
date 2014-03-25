@@ -14,12 +14,12 @@ namespace readingStructs
     {
         public class RefPtr
         {
-            public EntityInfo mt;
+            public EntityInfo Value;
         }
 
         public class PIntPtr
         {
-            public IntPtr mt;
+            public IntPtr Value;
         }
 
         [FieldOffset(0)]
@@ -29,12 +29,12 @@ namespace readingStructs
 
         public EntityInfoPtr(EntityInfo methodTable)
         {
-            Reference = new RefPtr { mt = methodTable };
+            Reference = new RefPtr { Value = methodTable };
         }
 
         public EntityInfoPtr(IntPtr methodTable)
         {
-            Pointer = new PIntPtr { mt = methodTable };
+            Pointer = new PIntPtr { Value = methodTable };
         }
     }
 

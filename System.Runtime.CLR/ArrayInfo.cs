@@ -1,6 +1,4 @@
-﻿
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
 {
@@ -37,7 +35,7 @@ namespace System.Runtime.CLR
 				{
 					fixed(int *cur = &Lengthes)
 					{
-						int count = 0;
+						var count = 0;
 						while(cur[count] != 0) count++;
 						return count;
 					}
@@ -66,8 +64,7 @@ namespace System.Runtime.CLR
 
 			fixed(EntityInfo *entity = &BasicInfo)
 			{
-				var pp = new EntityPtr { Handler = (int)entity };
-				var arr = pp.Object as Array;
+				var arr = EntityPtr.ToInstance<Array>(new IntPtr(entity));
 
 				if(IsValueTypes)
 				{

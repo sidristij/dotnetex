@@ -41,12 +41,12 @@ namespace readingStructs
     public class MethodTablePtr
     {
         public class RefPtr {
-            public MethodTableInfo mt;
+            public MethodTableInfo Value;
         }
 
         public class PIntPtr
         {
-            public IntPtr mt;
+            public IntPtr Value;
         }
 
         [FieldOffset(0)] public RefPtr  Reference;
@@ -54,12 +54,12 @@ namespace readingStructs
 
         public MethodTablePtr(MethodTableInfo methodTable)
         {
-            Reference = new RefPtr { mt = methodTable };
+            Reference = new RefPtr { Value = methodTable };
         }
 
         public MethodTablePtr(IntPtr methodTable)
         {
-            Pointer = new PIntPtr { mt = methodTable };
+            Pointer = new PIntPtr { Value = methodTable };
         }
     }
 

@@ -64,7 +64,6 @@ namespace System.Runtime.CLR
 			var startingPointer = Marshal.AllocHGlobal(_totalSize).ToInt32();
 			var mTable = (MethodTableInfo *)typeof(TPoolItem).TypeHandle.Value.ToInt32();
 			
-			var ptr = new EntityPtr();
 			var pFake = typeof(Stub).GetMethod("Construct", BindingFlags.Static|BindingFlags.Public);
 			var pCtor = _ctor = typeof(TPoolItem).GetConstructor(new []{typeof(int)});
 		
@@ -72,10 +71,11 @@ namespace System.Runtime.CLR
 			
 			for(int i = 0; i < capacity; i++)
 			{
-				ptr.Handler =  startingPointer + (objectSize * i);
-				ptr.Object.SetMethodTable(mTable);
+				var handler =  startingPointer + (objectSize * i);
+			    var obj = EntityPtr.ToInstance<object>((IntPtr)handler);
+                obj.SetType<TPoolItem>();
 				
-				var reference = (TPoolItem)ptr.Object;
+				var reference = (TPoolItem)obj;
 				reference.heap = this;
 				
 				_allObjects[i] = reference;

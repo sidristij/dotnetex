@@ -87,7 +87,8 @@ namespace System.Runtime.CLR
         InternalCorElementTypeExtraInfoMask                         = 0x00060000,
         InternalCorElementTypeExtraInfo_IfNotArrayThenTruePrimitive = 0x00020000,
         InternalCorElementTypeExtraInfo_IfNotArrayThenClass         = 0x00040000,
-        InternalCorElementTypeExtraInfo_IfNotArrayThenValueType     = 0x00060000,
+        InternalCorElementTypeExtraInfo_IfNotArrayThenValueType     = 0x00060000, 
+
         IfArrayThenSzArray                                          = 0x00020000,
         IfArrayThenSharedByReferenceTypes                           = 0x00040000,
 
@@ -116,9 +117,48 @@ namespace System.Runtime.CLR
 
         IsFreezingCompleted         = 0x80000000, // Static data has been frozen
 
-        NonTrivialInterfaceCast     = Array |
-                                                TransparentProxy,
+        NonTrivialInterfaceCast     = Array | TransparentProxy,
 	}
+
+    [Flags]
+    public enum MethodTableFlags2 : uint
+    {
+        MarshaledByRef = 0x0001, // Class is marshaled by ref (needs a remoting stub)
+        NoSecurityProperties = 0x0002, // Class does not have security properties (that is,
+        // GetClass()->GetSecurityProperties will return 0).
+        HasGenericsStaticsInfo = 0x0004,
+
+        MayNeedRestore = 0x0008, // Class may need restore
+        // This flag is set only for NGENed classes
+
+        UNUSED = 0x0010,
+        IsZapped = 0x0020, // This could be fetched from m_pLoaderModule if we run out of flags
+
+        IsDynamicStatics = 0x0040, // Static data will be stored in the dynamic table of the module
+        FixedAddressVTStatics = 0x0080, // Value type Statics in this class will be pinned
+
+        // These two flags only use three out of four possible combinations.  We should
+        // use the other combination to store some useful information about generics.
+        GenericsMask = 0x0300,
+        GenericsMask_NonGeneric = 0x0000, // no instantiation
+        GenericsMask_CanonInst = 0x0100, // an unshared or canonical-shared instantiation,
+        
+        // apart from the typical inst. e.g. List<int> or List<__Canon>
+        GenericsMask_NonCanonInst = 0x0200, // a non-canonical-shared instantiation, e.g. List<string>
+        GenericsMask_TypicalInst = 0x0300, // the type instantiated at its formal parameters, e.g. List<T>
+
+        ClassPreInited = 0x0400, // If this flag is set, we dont need to do any class initialization logic at all
+        IsAsyncPin = 0x0800,
+        ContainsGenericVariables = 0x1000, // we cache this flag to help detect these efficiently and
+        
+        // to detect this condition when restoring
+        IsInterface = 0x2000, // This MT is an interface
+        HasDispatchMap = 0x4000, // TRUE:  m_pDispatchMap is valid
+        
+        // FALSE: m_pImplTable is valid
+        HasVariance = 0x8000, // This is an instantiated type some of whose type parameters are co or contra-variant
+    }
+
     // ReSharper restore InconsistentNaming
     
     /*
