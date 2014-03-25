@@ -19,6 +19,7 @@ namespace _02_sizeof
             // Reference types sizes (obj and strings)
             Console.WriteLine("\nByValue (with boxing if valuetype:");
             PrintSize(new object());
+            PrintSize("");
             PrintSize("Hello!");
             PrintSize("Hello!!");
             PrintSize("Hello!!!");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CLR;
 
 namespace _01_allocOnStack
@@ -34,8 +35,17 @@ namespace _01_allocOnStack
             customerOnStack.x = 5;
             customerOnStack.y = 10;
 
+            // copy locally;
+            var arr = new int[10];
+            for (var i = 0; i < 10; i++)
+            {
+                arr[i] = data[i];
+            }
+
             // print contents via .ToString()
+            Console.WriteLine("data: {0}", String.Join(", ", arr));
             Console.WriteLine(customerOnStack);
+            Console.ReadKey();
         }
     }
 }

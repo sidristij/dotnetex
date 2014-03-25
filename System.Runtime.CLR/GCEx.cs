@@ -75,44 +75,41 @@ namespace System.Runtime.CLR
             if (flags == (int)(MethodTableFlags.Array |
                                MethodTableFlags.IfArrayThenSzArray | 
                                MethodTableFlags.IfArrayThenSharedByReferenceTypes | 
-                               MethodTableFlags.IsMarshalable))
+                               MethodTableFlags.IsMarshalable)) // 0x00270000
 		    {
                 return entity->MethodTable->Size;
 		    }
-
+            else 
+            if(((uint)flags & 0xffff0000) == 0x800a0000)
+		    {
+		         var arrayinfo = (ArrayInfo*)entity;
+                    return arrayinfo->SizeOf();
+		    }
+            else
             // At least we can avoid the touch in this case...
             if ((flags & (int)MethodTableFlags.Array) != 0)
             {
-                if ((flags & (int)MethodTableFlags.IfArrayThenSzArray) != 0)
+                var arrayinfo = (ArrayInfo*)entity;
+                return arrayinfo->SizeOf();
+            }
+            else if ((entity->MethodTable) == StringTypeHandle.ToPointer())
+            {
+                // TODO: on 4th nedds to be tested
+                if (MajorNetVersion >= 4)
                 {
-                    var arrayinfo = (ArrayInfo*)entity;
-                    return arrayinfo->SizeOf();
+                    var length = *(int*)((int)entity + 8);
+                    return 4 * ((14 + 2 * length + 3) / 4);
                 }
                 else
                 {
-                    var arrayinfo = (ArrayInfo*)entity;
-                    return arrayinfo->SizeOf();
+                    // on 1.0 -> 3.5 string have additional RealLength field
+                    var length = *(int*)((int)entity + 12);
+                    return 4 * ((16 + 2 * length + 3) / 4);
                 }
             }
             else if ( (flags2 & (int)MethodTableFlags2.IsInterface) != 0 || 
                       ((flags & (int)MethodTableFlags.InternalCorElementTypeExtraInfoMask) == (int)MethodTableFlags.InternalCorElementTypeExtraInfo_IfNotArrayThenClass))
             {
-                if ((entity->MethodTable) == StringTypeHandle.ToPointer())
-                {
-                    // TODO: on 4th nedds to be tested
-                    if (MajorNetVersion >= 4)
-                    {
-                        var length = *(int*)((int)entity + 8);
-                        return 4 * ((14 + 2 * length + 3) / 4);
-                    }
-                    else
-                    {
-                        // on 1.0 -> 3.5 string have additional RealLength field
-                        var length = *(int*)((int)entity + 12);
-                        return 4 * ((16 + 2 * length + 3) / 4);
-                    }
-                }
-
                 return entity->MethodTable->Size;
             }
             else if ((flags & (int)MethodTableFlags.InternalCorElementTypeExtraInfoMask) == (int)MethodTableFlags.InternalCorElementTypeExtraInfo_IfNotArrayThenValueType)
@@ -125,24 +122,6 @@ namespace System.Runtime.CLR
             }
 
 		    return 0;
-		    /*
-			if((int)entity->MethodTable == 0)
-				throw new ArgumentException("entity have nil in MethodTable (??)");
-
-		    if (((entity->MethodTable->Flags & MethodTableFlags.InternalCorElementTypeExtraInfoMask) != 0) &&
-                 (entity->MethodTable->Flags & MethodTableFlags.Array) != 0)
-		    {
-		        return entity->MethodTable->Size;
-		    }
-
-			if((entity->MethodTable->Flags & MethodTableFlags.Array) != 0)
-			{
-				var arrayinfo = (ArrayInfo *)entity;
-				return arrayinfo->SizeOf();
-			} 
-			
-            
-            */
 		}
 
 		/// <summary>

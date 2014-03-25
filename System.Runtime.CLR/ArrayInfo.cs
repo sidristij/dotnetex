@@ -65,10 +65,10 @@ namespace System.Runtime.CLR
 			fixed(EntityInfo *entity = &BasicInfo)
 			{
 				var arr = EntityPtr.ToInstance<Array>(new IntPtr(entity));
+                var elementType = arr.GetType().GetElementType();
 
-				if(IsValueTypes)
+				if(elementType.IsValueType)
 				{
-				    var elementType = arr.GetType().GetElementType();
 					var typecode = Type.GetTypeCode(elementType);
 						
 					switch(typecode)
@@ -106,12 +106,13 @@ namespace System.Runtime.CLR
 				{
 					elementsize = IntPtr.Size;
 				}
-			}
-			// Header
-			total += sizeof(EntityInfo);
-			total += IsValueTypes ? 0 : 4; // MethodsTable for refTypes
-			total += IsMultidimentional ? Dimensions * 8 : 4; 
 			
+			    // Header
+			    total += sizeof(EntityInfo);
+			    total += elementType.IsValueType ? 0 : 4; // MethodsTable for refTypes
+			    total += IsMultidimentional ? Dimensions * 8 : 4; 
+			}
+
 			// Contents
 			if(!IsMultidimentional)
 			{

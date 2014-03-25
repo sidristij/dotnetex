@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2C8AD140-D37A-4801-8E85-A40DDDEAC8D8}</ProjectGuid>
+    <ProjectGuid>{88E2B4A3-1D8A-4EBF-8BD5-43FB43D2C97E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_01_allocOnStack</RootNamespace>
-    <AssemblyName>01_allocOnStack</AssemblyName>
+    <RootNamespace>_05_getFutureObjects</RootNamespace>
+    <AssemblyName>05_getFutureObjects</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
