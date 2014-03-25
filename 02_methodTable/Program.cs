@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CLR;
-using System.Text;
-using Microsoft.Win32;
 
 namespace _02_sizeof
 {
     class Program
     {
-        static unsafe void Main(string[] args)
+        static void Main()
         {
+            // Printing sizes by type, not by value
             Console.WriteLine("\nByType:");
             PrintSize<object>();
             PrintSize<byte>();
@@ -19,6 +16,7 @@ namespace _02_sizeof
             PrintSize<string>();
             Console.ReadKey();
 
+            // Reference types sizes (obj and strings)
             Console.WriteLine("\nByValue (with boxing if valuetype:");
             PrintSize(new object());
             PrintSize("Hello!");
@@ -26,24 +24,31 @@ namespace _02_sizeof
             PrintSize("Hello!!!");
             PrintSize("Hello!!!!");
 
-            PrintSize((byte)123);
-            PrintSize((sbyte)123);
-            PrintSize('1');
-            PrintSize((short)123);
-            PrintSize((ushort)123);
-            PrintSize((int)123);
-            PrintSize((uint)123);
-            PrintSize((long)123);
-            PrintSize((ulong)123);
-            PrintSize(123f);
-            PrintSize(123.0);
-            PrintSize((decimal)123f);
-
-            PrintSize(new EntityInfo());
-            PrintSize(new MethodTableInfo());
+            // Boxing for elementary types and structs
+            PrintSize((object)(byte)123);
+            PrintSize((object)(sbyte)123);
+            PrintSize((object)'1');
+            PrintSize((object)(short)123);
+            PrintSize((object)(ushort)123);
+            PrintSize((object)123);
+            PrintSize((object)(uint)123);
+            PrintSize((object)(long)123);
+            PrintSize((object)(ulong)123);
+            PrintSize((object)123f);
+            PrintSize((object)123.0);
+            PrintSize((object)(decimal)123f);
+            PrintSize((object)new EntityInfo());
+            PrintSize((object)new MethodTableInfo());
             Console.ReadKey();
-            
-            Console.WriteLine("\nByRef:");
+
+            // Structs
+            Console.WriteLine("\nStructs:");
+            PrintSize<EntityInfo>();
+            PrintSize<MethodTableInfo>();
+            Console.ReadKey();
+
+            // Arrays
+            Console.WriteLine("\nArrays:");
             PrintSize(new byte[20]);
             PrintSize(new ulong[20]);
             PrintSize(new object[20]);
