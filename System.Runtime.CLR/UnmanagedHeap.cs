@@ -53,11 +53,12 @@ namespace System.Runtime.CLR
 	    private int startingPointer;
 		private readonly ConstructorInfo _ctor;
 		
-		public unsafe UnmanagedHeap(int capacity)
-		{                                
+		public UnmanagedHeap(int capacity)
+		{
 			_allObjects = new TPoolItem[capacity];
 			_freeSize = capacity;
 			
+            // Getting type size and total pool size
 			var objectSize = GCEx.SizeOf<TPoolItem>();
 			_totalSize = objectSize * capacity;
 			
@@ -82,10 +83,6 @@ namespace System.Runtime.CLR
 			}			
 			
 			_freeObjects = (TPoolItem[])_allObjects.Clone();
-			
-			// compile methods
-			this.Free(this.Allocate());
-			this.Free(this.AllocatePure());
 		}
 		
 		public int TotalSize

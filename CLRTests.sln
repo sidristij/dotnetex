@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "06_redirectingMethod", "06_
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "07_unmanagedPool", "07_unmanagedPool\07_unmanagedPool.csproj", "{50654A4C-D50A-49A3-9461-AF9E9074E271}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "08_unmanagedPoolPerf", "08_unmanagedPoolPerf\08_unmanagedPoolPerf.csproj", "{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -147,6 +149,16 @@ Global
 		{50654A4C-D50A-49A3-9461-AF9E9074E271}.Release|Mixed Platforms.Build.0 = Release|x86
 		{50654A4C-D50A-49A3-9461-AF9E9074E271}.Release|x86.ActiveCfg = Release|x86
 		{50654A4C-D50A-49A3-9461-AF9E9074E271}.Release|x86.Build.0 = Release|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Debug|x86.ActiveCfg = Debug|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Debug|x86.Build.0 = Debug|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Release|Any CPU.ActiveCfg = Release|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Release|Mixed Platforms.Build.0 = Release|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Release|x86.ActiveCfg = Release|x86
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -162,5 +174,6 @@ Global
 		{88E2B4A3-1D8A-4EBF-8BD5-43FB43D2C97E} = {9538927F-476D-484D-B45B-A8929681C375}
 		{C6322571-FFC6-4813-A59D-2F5A34A7721E} = {9538927F-476D-484D-B45B-A8929681C375}
 		{50654A4C-D50A-49A3-9461-AF9E9074E271} = {9538927F-476D-484D-B45B-A8929681C375}
+		{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5} = {9538927F-476D-484D-B45B-A8929681C375}
 	EndGlobalSection
 EndGlobal

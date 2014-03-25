@@ -5,14 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{C6322571-FFC6-4813-A59D-2F5A34A7721E}</ProjectGuid>
+    <ProjectGuid>{3AA6FBCD-1D76-4CDC-9845-8FC86710EAD5}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_06_redirectingMethod</RootNamespace>
-    <AssemblyName>06_redirectingMethod</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <RootNamespace>_08_unmanagedPoolPerf</RootNamespace>
+    <AssemblyName>08_unmanagedPoolPerf</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -44,21 +43,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InstanceClassA.cs" />
-    <Compile Include="InstanceClassB.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StaticClassA.cs" />
-    <Compile Include="StaticClassB.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\System.Runtime.CLR\System.Runtime.CLR.csproj">
       <Project>{E3BC3AE5-C2AB-442E-B649-C37E7982207E}</Project>
       <Name>System.Runtime.CLR</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
