@@ -9,7 +9,6 @@ namespace System.Runtime.CLR
 	{
 		public static void Construct(object obj, int value)
 		{
-			Console.WriteLine("Construct1");
 		}	
 	}
 	
@@ -26,7 +25,7 @@ namespace System.Runtime.CLR
 	}
 	
 	
-	public interface IUnmanagedHeapBase
+	public interface IUnmanagedHeapBase  : IDisposable
 	{
 		int TotalSize { get; }		
 		object Allocate();
@@ -51,6 +50,7 @@ namespace System.Runtime.CLR
 		private readonly TPoolItem[] _allObjects;
 		private readonly int _totalSize;
 		private int _freeSize;
+	    private int startingPointer;
 		private readonly ConstructorInfo _ctor;
 		
 		public unsafe UnmanagedHeap(int capacity)
@@ -58,10 +58,10 @@ namespace System.Runtime.CLR
 			_allObjects = new TPoolItem[capacity];
 			_freeSize = capacity;
 			
-			var objectSize = 100; //GCEx.SizeOf<T>();
+			var objectSize = GCEx.SizeOf<TPoolItem>();
 			_totalSize = objectSize * capacity;
 			
-			var startingPointer = Marshal.AllocHGlobal(_totalSize).ToInt32();
+			startingPointer = Marshal.AllocHGlobal(_totalSize).ToInt32();
 			var mTable = (MethodTableInfo *)typeof(TPoolItem).TypeHandle.Value.ToInt32();
 			
 			var pFake = typeof(Stub).GetMethod("Construct", BindingFlags.Static|BindingFlags.Public);
@@ -132,5 +132,10 @@ namespace System.Runtime.CLR
 		{
 			this.Free((TPoolItem)obj);
 		}
-	}
+
+        public void Dispose()
+        {
+            Marshal.FreeHGlobal((IntPtr)startingPointer);
+        }
+    }
 }

@@ -7,6 +7,11 @@ namespace System.Runtime.CLR
 {
     public static class MethodUtil
     {
+        public static void ReplaceMethod(Delegate from, Delegate to, bool skip = false)
+        {
+            ReplaceMethod(from.Method, to.Method, skip);
+        }
+
         /// <summary>
         /// Replaces the method.
         /// </summary>

@@ -48,14 +48,7 @@ namespace ConsoleTest
 			var a = new object();
 			var heap = new UnmanagedHeap<Customer>(10000);
 			var b = new object();
-
-		   
-		    var handle = GCHandle.Alloc(a, GCHandleType.Weak);
-		    // Let CLR finish all startup processes
-		    Console.ReadKey();
-
-		    Sandbox.Go();
-
+            
             Console.ReadKey();
 
 		    int gcc = GC.CollectionCount(0);
@@ -102,51 +95,5 @@ namespace ConsoleTest
 
 		    Console.ReadKey();
 		}
-		
-		private static unsafe void EnumerateAllFrom(object starting)
-		{
-			int count = 0, cursize = 0, size = 0;
-
-			foreach(var cur in GCEx.GetObjectsInSOH(starting))
-			{
-				cursize = GCEx.SizeOf(cur);
-				
-				if(cur is UnmanagedHeap<Customer>)
-				{
-					Console.WriteLine("At [0x{0:X}] Type found: {1}, points to heap of [{2}] size", (int)GCEx.GetEntityInfo(cur), cur.GetType().Name, (cur as UnmanagedHeap<Customer>).TotalSize );
-				} else {
-					Console.WriteLine("At [0x{0:X}] Type found: {1}", (int)GCEx.GetEntityInfo(cur), cur.GetType().Name);
-				}
-				size += cursize;					
-				count++;
-			}
-			
-			Console.WriteLine(" - sum: {0}, count: {1}", size, count);
-		}
-		
-	    public class Sandbox : MarshalByRefObject
-        {
-            private int foo()
-            {
-                var a = new object();
-                var ptr = EntityPtr.ToPointer(a);
-                return (int)ptr;
-            }
-
-            public static void Go()
-            {
-                var permissions = new PermissionSet(PermissionState.None);
-                permissions.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution | SecurityPermissionFlag.UnmanagedCode));
-
-                var dom = AppDomain.CreateDomain("foo", null, new AppDomainSetup
-                {
-                    ApplicationBase = AppDomain.CurrentDomain.BaseDirectory
-                }, permissions);
-
-                var p = (Sandbox)dom.CreateInstanceAndUnwrap(typeof(Sandbox).Assembly.FullName, typeof(Sandbox).FullName);
-
-                Console.WriteLine(p.foo());
-            }
-        }
 	}
 }
