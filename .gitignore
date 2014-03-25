@@ -2,3 +2,4 @@ bin/
 obj/
 *.userprefs
 _ReSharper.CLRTests/
+*.dotCover

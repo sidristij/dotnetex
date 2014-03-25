@@ -37,6 +37,7 @@ namespace _03_appdomain
             var obj= new object();
             var list = new List<int>(100);
             var objPtr = EntityPtr.ToPointer(obj);
+            Console.ReadKey();
 
             AppDomainRunner.Go(objPtr);
 

@@ -24,7 +24,7 @@ namespace sandbox
     {
         static void Main(string[] args)
         {
-            MethodTableInfo firsTableInfo, secondTableInfo;
+            MethodTableInfo firstTableInfo, secondTableInfo;
             EntityInfoPtr first_entityptr, second_entityptr;
             var customer = new Customer();
 
@@ -33,8 +33,8 @@ namespace sandbox
                 var safeptr1 = SafePtr.Create(customer);
                 first_entityptr = new EntityInfoPtr(safeptr1.IntPtr - IntPtr.Size);
                 var first_mtintptr = first_entityptr.Reference.mt.MtPointer;
-                firsTableInfo = new MethodTablePtr(first_mtintptr - IntPtr.Size).Reference.mt;
-                Console.WriteLine("Contents: {0}, {1}", firsTableInfo.Size, firsTableInfo.MethodsCount);
+                firstTableInfo = new MethodTablePtr(first_mtintptr - IntPtr.Size).Reference.mt;
+                Console.WriteLine("Contents: {0}, {1}", firstTableInfo.Size, firstTableInfo.MethodsCount);
             }
 
             /*taking address from Client*/
@@ -51,7 +51,8 @@ namespace sandbox
             // changing methods table address
             first_entityptr.Reference.mt.MtPointer = second_entityptr.Reference.mt.MtPointer;
 
-            Console.WriteLine("Customer after  mt rewritting: {0}", customer);
+            Console.WriteLine("Customer after mt rewritting: {0}", customer);
+            Console.ReadKey();
         }
     }
 }
