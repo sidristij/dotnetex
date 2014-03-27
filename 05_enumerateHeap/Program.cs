@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CLR;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 
-namespace _04_virtualMemory
+namespace _05_enumerateHeap
 {
     class Program
     {
@@ -38,16 +41,22 @@ namespace _04_virtualMemory
         private static unsafe void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
         {
             var count = 0;
-            
+            var strcount = 0;
+            var firstFound = string.Empty;
+            var first = false;
             for (long strMtPointer = heapsOffset.ToInt64(), end = lastHeapByte.ToInt64(); strMtPointer < end; strMtPointer++)
             {
                 try
                 {
                     if (IsString(strMtPointer))
                     {
-                        var str = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
-                        Console.WriteLine(str);
-                        count++;
+                        if (!first)
+                        {
+                            firstFound = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
+                            first = true;
+                        }
+
+                        strcount++;
                     }
                 }
                 catch
@@ -55,7 +64,13 @@ namespace _04_virtualMemory
                     ;
                 }
             }
-            Console.WriteLine("Total count: {0}", count);
+
+            foreach (var obj in GCEx.GetObjectsInSOH(firstFound))
+            {
+                Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
+                count++;
+            }
+            Console.WriteLine("objects count: {0}, strings: {1}", count, strcount);
         }
 
         private static unsafe bool IsString(long strMtPointer)
