@@ -54,10 +54,10 @@ namespace System.Runtime.CLR
 		#endregion
 		
 		[FieldOffset(20)]
-		public ObjectTypeInfo *EEClass;		
+		public ObjectTypeInfo *ModuleInfo;		
 		
 		[FieldOffset(24)]
-		public ObjectTypeInfo *ModuleInfo;
+		public ObjectTypeInfo *EEClass;
 	}
 	
 
