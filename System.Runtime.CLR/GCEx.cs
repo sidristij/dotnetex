@@ -6,7 +6,7 @@ namespace System.Runtime.CLR
 {
 	public static class GCEx
 	{
-		static readonly int MajorNetVersion;
+	    public static readonly int MajorNetVersion;
 		static readonly IntPtr StringTypeHandle;
         static readonly IntPtr ObjectTypeHandle;
 		
