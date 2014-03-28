@@ -10,7 +10,7 @@ namespace _04_sandbox
     {
         private void methodInsideAppDomain(IntPtr startingIntPtr)
         {
-            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr)))
+            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr), mt => true))
             {
                 Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj, obj.GetType().Name, GCEx.SizeOf(obj));
             }

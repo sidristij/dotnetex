@@ -65,7 +65,7 @@ namespace _05_enumerateHeap
                 }
             }
 
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound))
+            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => true))
             {
                 Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
                 count++;

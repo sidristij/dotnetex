@@ -20,7 +20,7 @@ namespace _05_getFutureObjects
 
                     // Lookup our List'1, printing while looking up
                     List<int> catched = null;
-                    foreach (var obj in GCEx.GetObjectsInSOH(startObj))
+                    foreach (var obj in GCEx.GetObjectsInSOH(startObj, mt => true))
                     {
                         Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj, obj.GetType().Name, GCEx.SizeOf(obj));
                         if (obj is List<int>) catched = (List<int>)obj;

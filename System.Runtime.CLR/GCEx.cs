@@ -144,19 +144,23 @@ namespace System.Runtime.CLR
 			obj.SetType<T>();
 			return obj;
 		}
-		
-		private static unsafe bool TryGetNextInSOH(object current, out object nextObject, out int size)
+
+        private static unsafe bool TryGetNextInSOH(object current, Predicate<long> checker, out object nextObject)
 		{			
 			nextObject = null;
 			
 			try
 			{
-			    int offset = (int)EntityPtr.ToPointer(current);
-				
-				size = SizeOf(current);
+			    var offset = (int)EntityPtr.ToPointer(current);
+				var size = SizeOf(current);
 			    offset += size;
-				
-				if(*(int *)(offset + 4) == 0)
+
+			    var mt = (long)*(IntPtr*) (offset + IntPtr.Size);
+
+                if(!checker(mt))
+			        return false;
+
+                if ((long)*(IntPtr*)(offset + IntPtr.Size) == 0)
 					return false;
 
 			    current = EntityPtr.ToInstance<object>((IntPtr) offset);
@@ -164,22 +168,20 @@ namespace System.Runtime.CLR
 				return true;
 			} catch
 			{
-				size = 0;
 				return false;
 			}
 		}
 
-		public static IEnumerable<object> GetObjectsInSOH(object starting)
+        public static IEnumerable<object> GetObjectsInSOH(object starting, Predicate<long> checker)
 		{
-			return GetObjectsInSOH(starting, new object());
+			return GetObjectsInSOH(starting, new object(), checker);
 		}
-		
-		public static IEnumerable<object> GetObjectsInSOH(object starting, object last)
+
+        public static IEnumerable<object> GetObjectsInSOH(object starting, object last, Predicate<long> checker)
 		{
 			var current = starting;
-		    int cursize;			
-			
-			do
+
+            while (TryGetNextInSOH(current, checker, out current))
 			{
 			    yield return current;
 				
@@ -187,8 +189,24 @@ namespace System.Runtime.CLR
 				{
 					yield break;
 				}		
-				 
-			} while(TryGetNextInSOH(current, out current, out cursize));			
+			}		
 		}
+
+        public static bool IsAchievableFrom(object from, object to, Predicate<long> checker)
+	    {
+            var current = from;
+            int cursize;
+
+            do
+            {
+                if (current == to)
+                {
+                    return true;
+                }
+
+            } while (TryGetNextInSOH(current, checker, out current));
+
+	        return false;
+	    }
 	}
 }

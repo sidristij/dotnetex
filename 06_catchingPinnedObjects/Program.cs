@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CLR;
 using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
 using System.Security;
+using System.Threading;
 
 namespace _06_catchingPinnedObjects
 {
@@ -24,44 +24,53 @@ namespace _06_catchingPinnedObjects
 
             unsafe
             {
+                // "Suspend" other threads
+                Thread.CurrentThread.Priority = ThreadPriority.Highest;
+                
+                // Run GC before we need to have pinned state for all objects
+                GC.Collect();
+                GC.WaitForFullGCComplete();
+
                 IntPtr managedStart, managedEnd;
                 GetManagedHeap(offset, out managedStart, out managedEnd, true);
-
+                    
                 // calculating memory ranges
                 var types = MakeTypesMap();
                 var highFreqHeapStart = types.Keys.Min(val => (long)val);
                 var highFreqHeapEnd   = types.Keys.Max(val => (long)val);
 
-                var lowFreqHeapStart = types.Keys.Min(val => (long)(((MethodTableInfo*)val)->EEClass));
-                var lowFreqHeapEnd   = types.Keys.Max(val => (long)(((MethodTableInfo*)val)->EEClass));
-
-                var lastHeapObject = EntityPtr.ToPointer(new object());
-
-                 for (long ptr = lastHeapObject.ToInt64(), end = managedStart.ToInt64(); ptr >= end; ptr--)
-
+                var lastObjectPtr = (long)managedStart;
+                for (long strMtPointer = (long)managedStart, end = (long)managedEnd; strMtPointer < end; strMtPointer++)
                 {
-                    if ((long) *(IntPtr*) ptr >= highFreqHeapStart &&
-                        (long) *(IntPtr*) ptr <= highFreqHeapEnd)
+                    try
                     {
-                        Type found;
-                        if (types.TryGetValue(*(IntPtr*)ptr, out found))
+                        if (IsString(strMtPointer))
                         {
-                            var mt = (MethodTableInfo*) ptr;
-                            var eec = (long) mt->EEClass;
-
-                            if (eec >= lowFreqHeapStart && eec <= lowFreqHeapEnd)
+                            var gap = strMtPointer - lastObjectPtr - 4;
+                            if (gap > 0)
                             {
-                                var obj = EntityPtr.ToInstance<object>((IntPtr)(ptr - 4));
-                                Console.WriteLine("type: {0}, value: {1}", obj.GetType(), obj );
+                                Console.WriteLine("\n Gap: {0}", gap);
+                            }
+
+                            var str = EntityPtr.ToInstance<object>((IntPtr) (strMtPointer - 4));
+                            
+                            foreach (var @object in GCEx.GetObjectsInSOH(str, (mt) => mt > highFreqHeapStart && mt <= highFreqHeapEnd && types.ContainsKey((IntPtr)mt)))
+                            {
+                                Console.Write("{0} -- ", @object.GetType().FullName);
+
+                                lastObjectPtr = (long)EntityPtr.ToPointer(@object);
+
+                                if(@object is string)
+                                    break;
                             }
                         }
                     }
+                    catch
+                    {
+                        ;
+                    }
                 }
-                // looking up structures
-                if (managedStart != IntPtr.Zero)
-                {
-                  //  EnumerateStrings(managedStart, managedEnd);
-                }
+                Thread.CurrentThread.Priority = ThreadPriority.Normal;
             }
             Console.ReadKey();
         }
@@ -69,27 +78,28 @@ namespace _06_catchingPinnedObjects
         private static Dictionary<IntPtr, Type> MakeTypesMap()
         {
             var dict = new Dictionary<IntPtr, Type>(10000);
-            var mscorlib = typeof (int).Assembly;
             var queue = new Queue<Type>(1000);
 
-            foreach (var type in mscorlib.GetTypes())
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
-                queue.Enqueue(type);
-            }
-
-            while (queue.Count != 0)
-            {
-                var type = queue.Dequeue();
-                var nested_types = type.GetNestedTypes();
-
-                foreach (var nested in nested_types)
+                foreach (var type in asm.GetTypes())
                 {
-                    queue.Enqueue(nested);
+                    queue.Enqueue(type);
                 }
 
-                dict[type.TypeHandle.Value] = type;
-            }
+                while (queue.Count != 0)
+                {
+                    var type = queue.Dequeue();
+                    var nested_types = type.GetNestedTypes();
 
+                    foreach (var nested in nested_types)
+                    {
+                        queue.Enqueue(nested);
+                    }
+
+                    dict[type.TypeHandle.Value] = type;
+                }
+            }
             return dict;
         }
 
@@ -126,7 +136,7 @@ namespace _06_catchingPinnedObjects
                 }
             }
 
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound))
+            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => true))
             {
                 Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
                 count++;
