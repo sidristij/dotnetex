@@ -14,7 +14,8 @@ namespace sandbox
 
             var mtptr = new MethodTablePtr(mtintptr - IntPtr.Size).Reference.Value;
 
-            Console.WriteLine("Contents: {0}, {1}", mtptr.Size, mtptr.MethodsCount);
+            Console.WriteLine("size: {0}, methods_count: {1}", mtptr.Size, mtptr.MethodsCount);
+            Console.ReadKey();
         }
     }
 }
