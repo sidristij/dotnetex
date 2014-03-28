@@ -86,12 +86,17 @@ namespace System.Runtime.CLR
                     return arrayinfo->SizeOf();
 		    }
             else
+            if (((uint)flags & 0xffff0000) == 0x000c0000)
+            {
+                return SizeOf<object>();
+            }
+            /*else
             // At least we can avoid the touch in this case...
             if ((flags & (int)MethodTableFlags.Array) != 0)
             {
                 var arrayinfo = (ArrayInfo*)entity;
                 return arrayinfo->SizeOf();
-            }
+            }*/
             else if ((entity->MethodTable) == StringTypeHandle.ToPointer())
             {
                 // TODO: on 4th nedds to be tested

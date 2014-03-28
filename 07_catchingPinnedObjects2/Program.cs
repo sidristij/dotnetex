@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 
-namespace _06_catchingPinnedObjects
+namespace _07_catchingPinnedObjects2
 {
     internal class Gap
     {
@@ -27,17 +27,16 @@ namespace _06_catchingPinnedObjects
         static unsafe void Main(string[] args)
         {
             var offset = IntPtr.Zero;
-            var gapsList = new List<Gap>(1000);
-            var objects = new List<object>(1000);
+            var objects = new Dictionary<Type, int>(7000);
             unsafe
             {
                 // "Suspend" other threads
                 Thread.CurrentThread.Priority = ThreadPriority.Highest;
-                
+
                 // Get current heap ranges
                 IntPtr managedStart, managedEnd;
                 GetManagedHeap(offset, out managedStart, out managedEnd, true);
-                    
+
                 // calculating memory ranges
                 var types = MakeTypesMap();
 
@@ -48,84 +47,78 @@ namespace _06_catchingPinnedObjects
 
                 // actually, we should calc ranges for each AppDomain and mscorlib as in Shared.
                 var highFreqHeapStart = types.Keys.Min(val => (long)val);
-                var highFreqHeapEnd   = types.Keys.Max(val => (long)val);
+                var highFreqHeapEnd = types.Keys.Max(val => (long)val);
 
                 // for gaps calculations
-                var lastObjectPtr = (long)managedStart;
+                var lastRecognized = (long)managedStart;
+                var lostMemory = 0L;
 
                 // for each byte in virtual memory block, we trying to find strings
-                for (long strMtPointer = (long)managedStart, end = (long)managedEnd; strMtPointer < end; strMtPointer++)
+                for (long ptr = (long)managedStart, end = (long)managedEnd; ptr < end; ptr++)
                 {
-                    // If not string, not our story
-                    if (!IsString(strMtPointer)) continue;
-
-                    // priting gap
-                    var gap = strMtPointer - lastObjectPtr;
-                    if (gap > 0 && gap > 12)
+                    var mt = *(IntPtr*) ptr;
+                    if (types.ContainsKey(mt))
                     {
-                        gapsList.Add(new Gap { Offset = lastObjectPtr - 4, Size = gap });
-                    }
-
-                    // If string is found, we can iterate all objects after string.
-                    var str = EntityPtr.ToInstance<object>((IntPtr) (strMtPointer - 4));
-                    foreach (var @object in GCEx.GetObjectsInSOH(str, (mt) => mt > highFreqHeapStart && mt <= highFreqHeapEnd && types.ContainsKey((IntPtr)mt)))
-                    {
-                        Console.Write("{0} -- ", @object.GetType().FullName);
-
-                        lastObjectPtr = (long)EntityPtr.ToPointer(@object);
-                        objects.Add(@object);
-
-                        // on string we break because we will find this address in main loop
-                        if (@object is string)
+                        // checking next object
+                        int size;
+                        try
                         {
-                            strMtPointer = lastObjectPtr - 1 - 4;
-                            break;
+                            size = GCEx.SizeOf((EntityInfo*) (ptr - IntPtr.Size));
                         }
-                    }
-                }
-
-                // Gaps:
-                foreach (var gap in gapsList)
-                {
-                    Console.WriteLine("For GAP size: {0}; ", gap.Size);
-                    var lastObjPtr = gap.Offset + gap.Size;
-                    var gapEndObject = EntityPtr.ToInstance<object>((IntPtr)(lastObjPtr));
-                    var resolved = 0;
-                    // for each byte in gap, we trying to find other objects
-                    for (long backptr = gap.Offset + gap.Size, end = gap.Offset; backptr > end; backptr--)
-                    {
-                        var mt = *(IntPtr*) backptr;
-                        if (types.ContainsKey(mt))
+                        catch (OverflowException)
                         {
-                            var unsafeObject = EntityPtr.ToInstance<object>((IntPtr)(backptr - 4));
-                            
-                            if (GCEx.SizeOf(unsafeObject) != (lastObjPtr - backptr + 4))
-                                break;
-                            ;
-                            if (objects.Contains(unsafeObject))
-                                break;
+                            continue;
+                        }
+                        if(ptr + size >= (long)managedEnd)
+                            continue;
 
-                            if (GCEx.IsAchievableFrom(unsafeObject, gapEndObject,
-                                l => l > highFreqHeapStart && l <= highFreqHeapEnd && types.ContainsKey((IntPtr) l)))
+                        var next_mt = *(IntPtr*) (ptr + size);
+
+                        // object found
+                        if (types.ContainsKey(next_mt))
+                        {
+                            var gap = (ptr - 4) - lastRecognized;
+                            lostMemory += gap;
+
+                            var found = EntityPtr.ToInstance<object>((IntPtr) (ptr - IntPtr.Size));
+                            RegisterObject(objects, found);
+
+                            object lastInChain = found;
+                            foreach (var @object in GCEx.GetObjectsInSOH(found, hmt => hmt > highFreqHeapStart && hmt <= highFreqHeapEnd && types.ContainsKey((IntPtr)hmt)))
                             {
-                                var size = GCEx.SizeOf(unsafeObject);
-                                Console.WriteLine("{0} found, size: {1}", unsafeObject.GetType(), size);
-                                resolved += size;
-                                gapEndObject = unsafeObject;
-                                lastObjPtr = backptr - 4;
-                                gap.Size -= size;
+                                RegisterObject(objects, @object);
+                                lastInChain = @object;
                             }
+
+                            ptr = (long)EntityPtr.ToPointer(lastInChain) + GCEx.SizeOf(lastInChain); // 12 = sizeof(object);
+                            lastRecognized = ptr;
                         }
                     }
-
-                    Console.WriteLine(" == RESOLVED: {0} from {1}, diff = {2}", resolved, gap.Size, gap.Size - resolved);
                 }
-                var foundSize = gapsList.Sum(g => g.Size);
-                var total = (long) managedEnd - (long) managedStart;
-                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%)", gapsList.Sum(g => g.Size), (long)managedEnd - (long)managedStart, ((float)foundSize / total) * 100);
+                
+                var foundSize = lostMemory;
+                var total = (long)managedEnd - (long)managedStart;
+
+                foreach (var type in objects.Keys.OrderByDescending(key => objects[key]))
+                {
+                    Console.WriteLine("{0:00000} : {1}", objects[type], type.FullName);
+                }
+
+                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total, ((float)foundSize / total) * 100, objects.Count);
                 Thread.CurrentThread.Priority = ThreadPriority.Normal;
             }
             Console.ReadKey();
+        }
+
+        private static void RegisterObject(Dictionary<Type, int> dict, object obj)
+        {
+            var type = obj.GetType();
+            if (!dict.ContainsKey(type))
+            {
+                dict[type] = 0;
+            }
+
+            dict[type] = dict[type] + 1;
         }
 
         private static Dictionary<IntPtr, Type> MakeTypesMap()
@@ -200,21 +193,21 @@ namespace _06_catchingPinnedObjects
         private static unsafe bool IsString(long strMtPointer)
         {
             int count;
-            if (*(IntPtr*) strMtPointer == StringsTable)
+            if (*(IntPtr*)strMtPointer == StringsTable)
             {
                 var entity = strMtPointer - IntPtr.Size; // move to sync block
                 if (GCEx.MajorNetVersion >= 4)
                 {
-                    var length = *(int*) ((int) entity + 8);
-                    if (length < 2048 && *(short*) ((int) entity + 12 + length*2) == 0)
+                    var length = *(int*)((int)entity + 8);
+                    if (length < 2048 && *(short*)((int)entity + 12 + length * 2) == 0)
                     {
                         return true;
                     }
                 }
                 else
                 {
-                    var length = *(int*) ((int) entity + 12);
-                    if (length < 2048 && *(short*) ((int) entity + 14 + length*2) == 0)
+                    var length = *(int*)((int)entity + 12);
+                    if (length < 2048 && *(short*)((int)entity + 14 + length * 2) == 0)
                     {
                         return true;
                     }
@@ -235,21 +228,21 @@ namespace _06_catchingPinnedObjects
             lastHeapByte = IntPtr.Zero;
             unsafe
             {
-                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr) Marshal.SizeOf(memoryBasicInformation)) !=
+                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr)Marshal.SizeOf(memoryBasicInformation)) !=
                        IntPtr.Zero)
                 {
-                    var isManagedHeap = (long) memoryBasicInformation.BaseAddress < (long) somePtr &&
-                                        (long) somePtr <
-                                        ((long) memoryBasicInformation.BaseAddress + (long) memoryBasicInformation.RegionSize);
+                    var isManagedHeap = (long)memoryBasicInformation.BaseAddress < (long)somePtr &&
+                                        (long)somePtr <
+                                        ((long)memoryBasicInformation.BaseAddress + (long)memoryBasicInformation.RegionSize);
 
                     if (isManagedHeap || !heaponly)
                     {
                         Console.WriteLine(
                             "{7} base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
-                            (int) memoryBasicInformation.BaseAddress,
+                            (int)memoryBasicInformation.BaseAddress,
                             memoryBasicInformation.RegionSize,
                             memoryBasicInformation.Type,
-                            (int) memoryBasicInformation.AllocationBase,
+                            (int)memoryBasicInformation.AllocationBase,
                             memoryBasicInformation.State,
                             memoryBasicInformation.Protect,
                             memoryBasicInformation.AllocationProtect,
@@ -259,10 +252,10 @@ namespace _06_catchingPinnedObjects
                     if (isManagedHeap)
                     {
                         heapsOffset = offset;
-                        lastHeapByte = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
+                        lastHeapByte = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
                     }
 
-                    offset = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
+                    offset = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
                 }
             }
         }
@@ -290,7 +283,8 @@ namespace _06_catchingPinnedObjects
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct SYSTEM_INFO {
+        internal struct SYSTEM_INFO
+        {
             internal int dwOemId;    // This is a union of a DWORD and a struct containing 2 WORDs.
             internal int dwPageSize;
             internal IntPtr lpMinimumApplicationAddress;
@@ -302,12 +296,12 @@ namespace _06_catchingPinnedObjects
             internal short wProcessorLevel;
             internal short wProcessorRevision;
         }
- 
+
         [DllImport(KERNEL32, SetLastError = true)]
         [SecurityCritical]
         internal static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
-    
+
     }
-    
+
     // ReSharper restore InconsistentNaming
 }
