@@ -8,6 +8,12 @@ using System.Threading;
 
 namespace _06_catchingPinnedObjects
 {
+    internal class Gap
+    {
+        public long Offset;
+        public long Size;
+    }
+
     class Program
     {
         internal const String KERNEL32 = "kernel32.dll";
@@ -21,53 +27,91 @@ namespace _06_catchingPinnedObjects
         static unsafe void Main(string[] args)
         {
             var offset = IntPtr.Zero;
-
+            var gapsList = new List<Gap>(1000);
+            var objects = new List<object>(1000);
             unsafe
             {
                 // "Suspend" other threads
                 Thread.CurrentThread.Priority = ThreadPriority.Highest;
                 
-                // Run GC before we need to have pinned state for all objects
-                GC.Collect();
-                GC.WaitForFullGCComplete();
-
+                // Get current heap ranges
                 IntPtr managedStart, managedEnd;
                 GetManagedHeap(offset, out managedStart, out managedEnd, true);
                     
                 // calculating memory ranges
                 var types = MakeTypesMap();
+
+                // Run GC before we need to have pinned state for all objects
+                GC.Collect();
+                GC.WaitForFullGCComplete();
+
+
+                // actually, we should calc ranges for each AppDomain and mscorlib as in Shared.
                 var highFreqHeapStart = types.Keys.Min(val => (long)val);
                 var highFreqHeapEnd   = types.Keys.Max(val => (long)val);
 
+                // for gaps calculations
                 var lastObjectPtr = (long)managedStart;
+
+                // for each byte in virtual memory block, we trying to find strings
                 for (long strMtPointer = (long)managedStart, end = (long)managedEnd; strMtPointer < end; strMtPointer++)
                 {
-                    try
+                    // If not string, not our story
+                    if (!IsString(strMtPointer)) continue;
+
+                    // priting gap
+                    var gap = strMtPointer - lastObjectPtr;
+                    if (gap > 0 && gap > 12)
                     {
-                        if (IsString(strMtPointer))
+                        gapsList.Add(new Gap { Offset = lastObjectPtr - 4, Size = gap });
+                    }
+
+                    // If string is found, we can iterate all objects after string.
+                    var str = EntityPtr.ToInstance<object>((IntPtr) (strMtPointer - 4));
+                    foreach (var @object in GCEx.GetObjectsInSOH(str, (mt) => mt > highFreqHeapStart && mt <= highFreqHeapEnd && types.ContainsKey((IntPtr)mt)))
+                    {
+                        Console.Write("{0} -- ", @object.GetType().FullName);
+
+                        lastObjectPtr = (long)EntityPtr.ToPointer(@object);
+                        objects.Add(@object);
+
+                        // on string we break because we will find this address in main loop
+                        if (@object is string)
                         {
-                            var gap = strMtPointer - lastObjectPtr - 4;
-                            if (gap > 0)
-                            {
-                                Console.WriteLine("\n Gap: {0}", gap);
-                            }
-
-                            var str = EntityPtr.ToInstance<object>((IntPtr) (strMtPointer - 4));
-                            
-                            foreach (var @object in GCEx.GetObjectsInSOH(str, (mt) => mt > highFreqHeapStart && mt <= highFreqHeapEnd && types.ContainsKey((IntPtr)mt)))
-                            {
-                                Console.Write("{0} -- ", @object.GetType().FullName);
-
-                                lastObjectPtr = (long)EntityPtr.ToPointer(@object);
-
-                                if(@object is string)
-                                    break;
-                            }
+                            strMtPointer = lastObjectPtr - 1 - 4;
+                            break;
                         }
                     }
-                    catch
+                }
+
+                // Gaps:
+                foreach (var gap in gapsList)
+                {
+                    Console.WriteLine("For GAP size: {0}; ", gap.Size);
+                    var lastObjPtr = gap.Offset + gap.Size;
+                    var gapEndObject = EntityPtr.ToInstance<object>((IntPtr)(lastObjPtr));
+
+                    // for each byte in gap, we trying to find other objects
+                    for (long backptr = gap.Offset + gap.Size, end = gap.Offset; backptr > end; backptr--)
                     {
-                        ;
+                        var mt = *(IntPtr*) backptr;
+                        if (types.ContainsKey(mt))
+                        {
+                            var unsafeObject = EntityPtr.ToInstance<object>((IntPtr)(backptr - 4));
+                            
+                            if (GCEx.SizeOf(unsafeObject) != (lastObjPtr - backptr + 4))
+                                break;
+                            ;
+                            if (objects.Contains(unsafeObject))
+                                break;
+
+                            if (GCEx.IsAchievableFrom(unsafeObject, gapEndObject,
+                                l => l > highFreqHeapStart && l <= highFreqHeapEnd && types.ContainsKey((IntPtr) l)))
+                            {
+                                Console.WriteLine("{0} found, size: {1}", unsafeObject.GetType(), GCEx.SizeOf(unsafeObject));
+                                gapEndObject = backptr - 4;
+                            }
+                        }
                     }
                 }
                 Thread.CurrentThread.Priority = ThreadPriority.Normal;
