@@ -3,17 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CLR;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Threading;
 
 namespace _07_catchingPinnedObjects2
 {
-    internal class Gap
-    {
-        public long Offset;
-        public long Size;
-    }
-
     class Program
     {
         internal const String KERNEL32 = "kernel32.dll";
@@ -28,6 +21,7 @@ namespace _07_catchingPinnedObjects2
         {
             var offset = IntPtr.Zero;
             var objects = new Dictionary<Type, int>(7000);
+
             unsafe
             {
                 // "Suspend" other threads
@@ -59,7 +53,7 @@ namespace _07_catchingPinnedObjects2
                     var mt = *(IntPtr*) ptr;
                     if (types.ContainsKey(mt))
                     {
-                        // checking next object
+                        // checking next object.
                         int size;
                         try
                         {
@@ -104,7 +98,7 @@ namespace _07_catchingPinnedObjects2
                     Console.WriteLine("{0:00000} : {1}", objects[type], type.FullName);
                 }
 
-                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total, ((float)foundSize / total) * 100, objects.Count);
+                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total, ((float)foundSize / total) * 100, objects.Values.Sum());
                 Thread.CurrentThread.Priority = ThreadPriority.Normal;
             }
             Console.ReadKey();
@@ -147,73 +141,6 @@ namespace _07_catchingPinnedObjects2
                 }
             }
             return dict;
-        }
-
-
-        /// <summary>
-        /// Enumerates all strings in heap
-        /// </summary>
-        /// <param name="heapsOffset">Heap starting point</param>
-        /// <param name="lastHeapByte">Heap last byte</param>
-        private static void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
-        {
-            var count = 0;
-            var strcount = 0;
-            var firstFound = string.Empty;
-            var first = false;
-            for (long strMtPointer = heapsOffset.ToInt64(), end = lastHeapByte.ToInt64(); strMtPointer < end; strMtPointer++)
-            {
-                try
-                {
-                    if (IsString(strMtPointer))
-                    {
-                        if (!first)
-                        {
-                            firstFound = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
-                            first = true;
-                        }
-
-                        strcount++;
-                    }
-                }
-                catch
-                {
-                    ;
-                }
-            }
-
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => true))
-            {
-                Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
-                count++;
-            }
-            Console.WriteLine("objects count: {0}, strings: {1}", count, strcount);
-        }
-
-        private static unsafe bool IsString(long strMtPointer)
-        {
-            int count;
-            if (*(IntPtr*)strMtPointer == StringsTable)
-            {
-                var entity = strMtPointer - IntPtr.Size; // move to sync block
-                if (GCEx.MajorNetVersion >= 4)
-                {
-                    var length = *(int*)((int)entity + 8);
-                    if (length < 2048 && *(short*)((int)entity + 12 + length * 2) == 0)
-                    {
-                        return true;
-                    }
-                }
-                else
-                {
-                    var length = *(int*)((int)entity + 12);
-                    if (length < 2048 && *(short*)((int)entity + 14 + length * 2) == 0)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
 
         /// <summary>
@@ -260,7 +187,6 @@ namespace _07_catchingPinnedObjects2
             }
         }
 
-
         // ReSharper disable InconsistentNaming
 
         [DllImport(KERNEL32, SetLastError = true)]
@@ -281,27 +207,6 @@ namespace _07_catchingPinnedObjects2
             internal uint Protect;
             internal uint Type;
         }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct SYSTEM_INFO
-        {
-            internal int dwOemId;    // This is a union of a DWORD and a struct containing 2 WORDs.
-            internal int dwPageSize;
-            internal IntPtr lpMinimumApplicationAddress;
-            internal IntPtr lpMaximumApplicationAddress;
-            internal IntPtr dwActiveProcessorMask;
-            internal int dwNumberOfProcessors;
-            internal int dwProcessorType;
-            internal int dwAllocationGranularity;
-            internal short wProcessorLevel;
-            internal short wProcessorRevision;
-        }
-
-        [DllImport(KERNEL32, SetLastError = true)]
-        [SecurityCritical]
-        internal static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
-
     }
-
     // ReSharper restore InconsistentNaming
 }
