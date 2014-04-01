@@ -23,7 +23,7 @@ namespace _05_getFutureObjects
                     foreach (var obj in GCEx.GetObjectsInSOH(startObj, mt => true))
                     {
                         Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj, obj.GetType().Name, GCEx.SizeOf(obj));
-                        if (obj is List<int>) catched = (List<int>)obj;
+                        if (obj.Item is List<int>) catched = (List<int>)obj.Item;
                     }
 
                     // Congrats if found

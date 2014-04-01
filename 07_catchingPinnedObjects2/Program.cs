@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CLR;
 using System.Runtime.InteropServices;
@@ -7,17 +8,19 @@ using System.Threading;
 
 namespace _07_catchingPinnedObjects2
 {
-    class Program
+    internal class Program
     {
         internal const String KERNEL32 = "kernel32.dll";
         internal static IntPtr StringsTable;
+        internal static IntPtr MscorlibModule;
 
-        static Program()
+        static unsafe Program()
         {
-            StringsTable = typeof(string).TypeHandle.Value;
+            StringsTable = typeof (string).TypeHandle.Value;
+            MscorlibModule = (IntPtr)((MethodTableInfo*)typeof(string).TypeHandle.Value)->ModuleInfo;
         }
 
-        static unsafe void Main(string[] args)
+        private static unsafe void Main(string[] args)
         {
             var offset = IntPtr.Zero;
             var objects = new Dictionary<Type, int>(7000);
@@ -29,29 +32,26 @@ namespace _07_catchingPinnedObjects2
 
                 // Get current heap ranges
                 IntPtr managedStart, managedEnd;
-                GetManagedHeap(offset, out managedStart, out managedEnd, true);
-
-                // calculating memory ranges
-                var types = MakeTypesMap();
+                
+                Console.WriteLine("Object: {0}", GCEx.SizeOf("Hell"));
 
                 // Run GC before we need to have pinned state for all objects
-                GC.Collect();
-                GC.WaitForFullGCComplete();
+                //GC.Collect();
+               //GC.WaitForFullGCComplete();
 
+                Console.ReadKey();
+                GetManagedHeap(offset, out managedStart, out managedEnd);
 
-                // actually, we should calc ranges for each AppDomain and mscorlib as in Shared.
-                var highFreqHeapStart = types.Keys.Min(val => (long)val);
-                var highFreqHeapEnd = types.Keys.Max(val => (long)val);
-
+                Console.WriteLine(IsCorrectMethodsTable(typeof (OutOfMemoryException).TypeHandle.Value));
+                
                 // for gaps calculations
-                var lastRecognized = (long)managedStart;
+                var lastRecognized = (long) managedStart;
                 var lostMemory = 0L;
 
                 // for each byte in virtual memory block, we trying to find strings
-                for (long ptr = (long)managedStart, end = (long)managedEnd; ptr < end; ptr++)
+                for (long ptr = (long) managedStart, end = (long) managedEnd; ptr < end; ptr++)
                 {
-                    var mt = *(IntPtr*) ptr;
-                    if (types.ContainsKey(mt))
+                    if (IsCorrectMethodsTable(*(IntPtr*)ptr))
                     {
                         // checking next object.
                         int size;
@@ -63,45 +63,63 @@ namespace _07_catchingPinnedObjects2
                         {
                             continue;
                         }
-                        if(ptr + size >= (long)managedEnd)
+
+                        if (ptr + size > (long) managedEnd)
                             continue;
 
-                        var next_mt = *(IntPtr*) (ptr + size);
-
-                        // object found
-                        if (types.ContainsKey(next_mt))
                         {
-                            var gap = (ptr - 4) - lastRecognized;
+                            var gap = (ptr - IntPtr.Size) - (lastRecognized + ((lastRecognized == managedStart.ToInt64()) ? 0 : GCEx.SizeOf((EntityInfo*)lastRecognized)));
+
                             lostMemory += gap;
 
                             var found = EntityPtr.ToInstance<object>((IntPtr) (ptr - IntPtr.Size));
                             RegisterObject(objects, found);
 
-                            object lastInChain = found;
-                            foreach (var @object in GCEx.GetObjectsInSOH(found, hmt => hmt > highFreqHeapStart && hmt <= highFreqHeapEnd && types.ContainsKey((IntPtr)hmt)))
+                            var lastInChain = found;
+                            foreach (var item in GCEx.GetObjectsInSOH(found, hmt => IsCorrectMethodsTable((IntPtr)hmt)))
                             {
-                                RegisterObject(objects, @object);
-                                lastInChain = @object;
+                                RegisterObject(objects, item.Item);
+                                if(!item.IsArrayItem) lastInChain = item.Item;
                             }
 
-                            ptr = (long)EntityPtr.ToPointer(lastInChain) + GCEx.SizeOf(lastInChain); // 12 = sizeof(object);
-                            lastRecognized = ptr;
+                            lastRecognized = (long)EntityPtr.ToPointer(lastInChain);
+                            ptr = lastRecognized + GCEx.SizeOf(lastInChain);
                         }
                     }
                 }
-                
+
                 var foundSize = lostMemory;
-                var total = (long)managedEnd - (long)managedStart;
+                var total = (long) managedEnd - (long) managedStart;
 
                 foreach (var type in objects.Keys.OrderByDescending(key => objects[key]))
                 {
                     Console.WriteLine("{0:00000} : {1}", objects[type], type.FullName);
                 }
 
-                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total, ((float)foundSize / total) * 100, objects.Values.Sum());
+                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total,
+                    ((float) foundSize/total)*100, objects.Values.Sum());
                 Thread.CurrentThread.Priority = ThreadPriority.Normal;
             }
             Console.ReadKey();
+        }
+
+        private static unsafe bool IsCorrectMethodsTable(IntPtr mt)
+        {
+            if (mt == IntPtr.Zero) return false;
+            
+            if (PointsToAllocated(mt))
+                if (PointsToAllocated((IntPtr) ((MethodTableInfo*) mt)->EEClass))
+                    if (PointsToAllocated((IntPtr) ((MethodTableInfo*) mt)->EEClass->MethodsTable))
+                        return ((IntPtr)((MethodTableInfo*) mt)->EEClass->MethodsTable == mt) || 
+                               ((IntPtr) ((MethodTableInfo*) mt)->ModuleInfo == MscorlibModule);
+            
+            return false;
+        }
+
+        private static bool PointsToAllocated(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) return false;
+            return !IsBadReadPtr(ptr, 32);
         }
 
         private static void RegisterObject(Dictionary<Type, int> dict, object obj)
@@ -115,38 +133,10 @@ namespace _07_catchingPinnedObjects2
             dict[type] = dict[type] + 1;
         }
 
-        private static Dictionary<IntPtr, Type> MakeTypesMap()
-        {
-            var dict = new Dictionary<IntPtr, Type>(10000);
-            var queue = new Queue<Type>(1000);
-
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                foreach (var type in asm.GetTypes())
-                {
-                    queue.Enqueue(type);
-                }
-
-                while (queue.Count != 0)
-                {
-                    var type = queue.Dequeue();
-                    var nested_types = type.GetNestedTypes();
-
-                    foreach (var nested in nested_types)
-                    {
-                        queue.Enqueue(nested);
-                    }
-
-                    dict[type.TypeHandle.Value] = type;
-                }
-            }
-            return dict;
-        }
-
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte, bool heaponly)
+        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
             var somePtr = EntityPtr.ToPointer("sample");
             var memoryBasicInformation = new MEMORY_BASIC_INFORMATION();
@@ -161,21 +151,7 @@ namespace _07_catchingPinnedObjects2
                     var isManagedHeap = (long)memoryBasicInformation.BaseAddress < (long)somePtr &&
                                         (long)somePtr <
                                         ((long)memoryBasicInformation.BaseAddress + (long)memoryBasicInformation.RegionSize);
-
-                    if (isManagedHeap || !heaponly)
-                    {
-                        Console.WriteLine(
-                            "{7} base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
-                            (int)memoryBasicInformation.BaseAddress,
-                            memoryBasicInformation.RegionSize,
-                            memoryBasicInformation.Type,
-                            (int)memoryBasicInformation.AllocationBase,
-                            memoryBasicInformation.State,
-                            memoryBasicInformation.Protect,
-                            memoryBasicInformation.AllocationProtect,
-                            isManagedHeap ? " ** " : "    ");
-                    }
-
+                    
                     if (isManagedHeap)
                     {
                         heapsOffset = offset;
@@ -188,6 +164,8 @@ namespace _07_catchingPinnedObjects2
         }
 
         // ReSharper disable InconsistentNaming
+        [DllImport(KERNEL32, SetLastError = true)]
+        internal static extern unsafe bool IsBadReadPtr(IntPtr address, uint ucb);
 
         [DllImport(KERNEL32, SetLastError = true)]
         unsafe internal static extern IntPtr VirtualQuery(
@@ -208,5 +186,6 @@ namespace _07_catchingPinnedObjects2
             internal uint Type;
         }
     }
+
     // ReSharper restore InconsistentNaming
 }

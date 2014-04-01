@@ -60,21 +60,16 @@ namespace System.Runtime.CLR
 		public ObjectTypeInfo *EEClass;
 	}
 	
-
-	
-	[StructLayout(LayoutKind.Explicit)]
+    [StructLayout(LayoutKind.Explicit)]
 	public unsafe struct ObjectTypeInfo
 	{		
-		[FieldOffset(0)]
+        [FieldOffset(0)]
 	    public ObjectTypeInfo *ParentClass;
+
+        [FieldOffset(4)]
+        public IntPtr mdTypeDefinition;
 	    
-		[FieldOffset(4)]
-	    public int mdTypeDefinition;
-	    
-		[FieldOffset(8)]
-	    public int ClassLoader;
-	    
-		[FieldOffset(12)]
+        [FieldOffset(16)]
 	    public MethodTableInfo *MethodsTable;
 	}
 

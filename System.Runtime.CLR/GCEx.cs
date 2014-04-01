@@ -55,7 +55,8 @@ namespace System.Runtime.CLR
 		
 		public static unsafe Int32 SizeOf(this object obj)
 		{
-            return SizeOf((EntityInfo*)EntityPtr.ToPointer(obj));
+            var x = SizeOf((EntityInfo*)EntityPtr.ToPointer(obj));
+		    return x;
 		}
 
 	    public static unsafe void SetType<TType>(this object obj)
@@ -84,7 +85,12 @@ namespace System.Runtime.CLR
 		    {
 		         var arrayinfo = (ArrayInfo*)entity;
                     return arrayinfo->SizeOf();
-		    }
+            }
+            else
+            if (((uint)flags & 0xffff0000) == 0x01400200)
+            {
+                return entity->MethodTable->Size;
+            }
             else
             if (((uint)flags & 0xffff0000) == 0x000c0000)
             {
@@ -165,8 +171,7 @@ namespace System.Runtime.CLR
                 if(!checker(mt))
 			        return false;
 
-                if ((long)*(IntPtr*)(offset + IntPtr.Size) == 0)
-					return false;
+                //if ((long)*(IntPtr*)(offset + IntPtr.Size) == 0) return false;
 
 			    current = EntityPtr.ToInstance<object>((IntPtr) offset);
 				nextObject = current;
@@ -177,19 +182,42 @@ namespace System.Runtime.CLR
 			}
 		}
 
-        public static IEnumerable<object> GetObjectsInSOH(object starting, Predicate<long> checker)
+	    public class SohEnumeratorItem
+	    {
+	        public object Item;
+	        public bool IsArrayItem;
+	    }
+
+        public static IEnumerable<SohEnumeratorItem> GetObjectsInSOH(object starting, Predicate<long> checker)
 		{
 			return GetObjectsInSOH(starting, new object(), checker);
 		}
 
-        public static IEnumerable<object> GetObjectsInSOH(object starting, object last, Predicate<long> checker)
+        public static IEnumerable<SohEnumeratorItem> GetObjectsInSOH(object starting, object last, Predicate<long> checker)
 		{
 			var current = starting;
+            var enumItem = new SohEnumeratorItem();
 
             while (TryGetNextInSOH(current, checker, out current))
-			{
-			    yield return current;
-				
+            {
+                enumItem.Item = current;
+			    yield return enumItem;
+                
+			    var @array = current as Array;
+			    if (@array != null && !@array.GetType().GetElementType().IsValueType)
+			    {
+			        enumItem.IsArrayItem = true;
+			        foreach (var item in @array)
+			        {
+			            enumItem.Item = item;
+			            if (item != null)
+			            {
+			                yield return enumItem;
+			            }
+			        }
+			        enumItem.IsArrayItem = false;
+			    }
+                
 				if(current == last)
 				{
 					yield break;
