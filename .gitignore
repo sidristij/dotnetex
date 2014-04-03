@@ -3,3 +3,5 @@ obj/
 *.userprefs
 _ReSharper.CLRTests/
 *.dotCover
+*.user
+*.DotSettings
