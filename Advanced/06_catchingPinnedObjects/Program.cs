@@ -156,47 +156,6 @@ namespace _06_catchingPinnedObjects
             return dict;
         }
 
-
-        /// <summary>
-        /// Enumerates all strings in heap
-        /// </summary>
-        /// <param name="heapsOffset">Heap starting point</param>
-        /// <param name="lastHeapByte">Heap last byte</param>
-        private static void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
-        {
-            var count = 0;
-            var strcount = 0;
-            var firstFound = string.Empty;
-            var first = false;
-            for (long strMtPointer = heapsOffset.ToInt64(), end = lastHeapByte.ToInt64(); strMtPointer < end; strMtPointer++)
-            {
-                try
-                {
-                    if (IsString(strMtPointer))
-                    {
-                        if (!first)
-                        {
-                            firstFound = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
-                            first = true;
-                        }
-
-                        strcount++;
-                    }
-                }
-                catch
-                {
-                    ;
-                }
-            }
-
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => true))
-            {
-                Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
-                count++;
-            }
-            Console.WriteLine("objects count: {0}, strings: {1}", count, strcount);
-        }
-
         private static unsafe bool IsString(long strMtPointer)
         {
             int count;

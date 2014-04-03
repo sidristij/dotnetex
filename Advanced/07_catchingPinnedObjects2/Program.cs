@@ -32,18 +32,14 @@ namespace _07_catchingPinnedObjects2
 
                 // Get current heap ranges
                 IntPtr managedStart, managedEnd;
-                
-                Console.WriteLine("Object: {0}", GCEx.SizeOf("Hell"));
 
                 // Run GC before we need to have pinned state for all objects
                 //GC.Collect();
-               //GC.WaitForFullGCComplete();
+                //GC.WaitForFullGCComplete();
 
                 Console.ReadKey();
                 GetManagedHeap(offset, out managedStart, out managedEnd);
 
-                Console.WriteLine(IsCorrectMethodsTable(typeof (OutOfMemoryException).TypeHandle.Value));
-                
                 // for gaps calculations
                 var lastRecognized = (long) managedStart;
                 var lostMemory = 0L;
