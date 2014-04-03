@@ -25,8 +25,7 @@
 
 .class public auto ansi abstract sealed beforefieldinit System.Runtime.CLR.EntityPtr
 	extends [mscorlib]System.Object
-{               	
-	// Methods
+{             
 	.method public hidebysig static 
 		native int ToPointer<TType> (
 			!!TType input
@@ -44,6 +43,22 @@
 		ldc.i4 4
 		sub
 		conv.i
+		ret
+	} // end of method Converter::ToPointer
+
+	.method public hidebysig static 
+		native int ToPointerWithOffset<TType> (
+			!!TType input
+		) cil managed 
+	{
+		// Method begins at RVA 0x2254
+		// Code size 7 (0x7)
+		.maxstack 2
+		.locals init (
+			[0] native int CSS
+		)
+
+		ldarg.0
 		ret
 	} // end of method Converter::ToPointer
 
@@ -65,6 +80,22 @@
 		ldc.i4 4
 		add
 		conv.i
+		ret
+	} // end of method Converter::ToInstance
+
+	.method public hidebysig static 
+		!!TType ToInstanceWithOffset<TType> (
+			native int input
+		) cil managed 
+	{
+		// Method begins at RVA 0x2254
+		// Code size 7 (0x7)
+		.maxstack 2
+		.locals init (
+			[0] native int CSS
+		)
+
+		ldarg.0		
 		ret
 	} // end of method Converter::ToInstance
 

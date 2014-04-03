@@ -37,26 +37,23 @@ namespace _08_unmanagedPoolPerf
             
             Console.ReadKey();
 
-		    int collectionCount = GC.CollectionCount(0);
-                
 		    var sw = Stopwatch.StartNew();
 		    for (int i = 0; i < 50000; i++)
 		    {
 		        var obj = heap.AllocatePure();
 		    }
-
-		    var pureAllocTicks = sw.ElapsedTicks;
-		    Console.WriteLine("Ctor call via reflection (on already allocated memory): {0}", pureAllocTicks);
-
-		    heap.Reset();
+            var pureAllocTicks = sw.ElapsedTicks;
+		    
+            Console.WriteLine("Ctor call via reflection (on already allocated memory): {0}", pureAllocTicks);
+            heap.Reset();
 
 		    sw = Stopwatch.StartNew();
 		    for (int i = 0; i < 50000; i++)
 		    {
 		        var obj = heap.Allocate();
 		    }
-
 		    var ctorRedirTicks = sw.ElapsedTicks;
+
 		    Console.WriteLine("Ctor call via method body ptr redirection: {0}", ctorRedirTicks);
 
             sw = Stopwatch.StartNew();
@@ -64,15 +61,12 @@ namespace _08_unmanagedPoolPerf
 		    {
 		        var obj = new Customer(123);
             }
-
-            int collectionCountAfter = GC.CollectionCount(0);
-		        
 		    var newObjTicks = sw.ElapsedTicks;
+    
 		    Console.WriteLine("pure allocation in managed memory: {0}", newObjTicks);
 		    Console.WriteLine("ctor Redirection / Refl ctor call: {0} (higher is faster)", (float) pureAllocTicks / ctorRedirTicks);
 		    Console.WriteLine("ctor Redirection / newobj:         {0} (higher is faster)", (float) newObjTicks / ctorRedirTicks);
 		    Console.WriteLine("newobj / Refl ctor call:           {0} (higher is faster)", (float) pureAllocTicks / newObjTicks);
-            Console.WriteLine("GCC before: {0}, GCC after : {1}", collectionCount, collectionCountAfter);
 
 		    Console.ReadKey();
 		}
