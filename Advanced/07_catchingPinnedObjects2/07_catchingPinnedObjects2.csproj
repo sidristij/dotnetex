@@ -52,7 +52,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\System.Runtime.CLR\System.Runtime.CLR.csproj">
+    <ProjectReference Include="..\..\System.Runtime.CLR\System.Runtime.CLR.csproj">
       <Project>{E3BC3AE5-C2AB-442E-B649-C37E7982207E}</Project>
       <Name>System.Runtime.CLR</Name>
     </ProjectReference>

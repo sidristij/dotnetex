@@ -1,12 +1,16 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
 {
+    /// <summary>
+    /// Represents Array structure in memory
+    /// </summary>
 	[StructLayout(LayoutKind.Explicit)]
 	public unsafe struct ArrayInfo
 	{
 		[FieldOffset(0)]
-		public EntityInfo BasicInfo;
+		internal EntityInfo BasicInfo;
 		
 		[FieldOffset(8)]
 		private int Lengthes;
@@ -15,7 +19,7 @@ namespace System.Runtime.CLR
 		{
 			get 
 			{
-				return (BasicInfo.MethodTable->Flags & MethodTableFlags.IfArrayThenSzArray) == 0;
+				return (BasicInfo.MethodTable->Flags & MethodTableFlags.IfArrayThenMultidim) == 0;
 			}
 		}
 	

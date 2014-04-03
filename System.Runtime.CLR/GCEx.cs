@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace System.Runtime.CLR
@@ -8,12 +7,10 @@ namespace System.Runtime.CLR
 	{
 	    public static readonly int MajorNetVersion;
 		static readonly IntPtr StringTypeHandle;
-        static readonly IntPtr ObjectTypeHandle;
 		
 		static GCEx()
 		{
 			MajorNetVersion = Environment.Version.Major;
-		    ObjectTypeHandle = typeof (object).TypeHandle.Value;
 			StringTypeHandle = typeof (string).TypeHandle.Value;
 		}
 		
@@ -73,37 +70,32 @@ namespace System.Runtime.CLR
 		    var flags2 = (uint) entity->MethodTable->AdditionalFlags;
 
             // if boxed elementary type
-            if (flags == (int)(MethodTableFlags.Array |
-                               MethodTableFlags.IfArrayThenSzArray | 
-                               MethodTableFlags.IfArrayThenSharedByReferenceTypes | 
-                               MethodTableFlags.IsMarshalable)) // 0x00270000
+            if (flags == 0x00270000)
 		    {
                 return entity->MethodTable->Size;
 		    }
-            else 
-            if(((uint)flags & 0xffff0000) == 0x800a0000)
+
+            // Array
+            if((flags & 0xffff0000) == 0x800a0000)   
 		    {
 		         var arrayinfo = (ArrayInfo*)entity;
                     return arrayinfo->SizeOf();
             }
-            else
-            if (((uint)flags & 0xffff0000) == 0x01400200)
+
+            // ???
+            if ((flags & 0xffff0000) == 0x01400200)  
             {
                 return entity->MethodTable->Size;
             }
-            else
-            if (((uint)flags & 0xffff0000) == 0x000c0000)
+
+            // COM interface: have no size and have no .Net class
+            if ((flags & 0xffff0000) == 0x000c0000)
             {
                 return SizeOf<object>();
             }
-            /*else
-            // At least we can avoid the touch in this case...
-            if ((flags & (int)MethodTableFlags.Array) != 0)
-            {
-                var arrayinfo = (ArrayInfo*)entity;
-                return arrayinfo->SizeOf();
-            }*/
-            else if ((entity->MethodTable) == StringTypeHandle.ToPointer())
+            
+            // String
+            if ((entity->MethodTable) == StringTypeHandle.ToPointer())
             {
                 // TODO: on 4th nedds to be tested
                 if (MajorNetVersion >= 4)
@@ -118,6 +110,8 @@ namespace System.Runtime.CLR
                     return 4 * ((16 + 2 * length + 3) / 4);
                 }
             }
+            
+            /*
             else if ( (flags2 & (int)MethodTableFlags2.IsInterface) != 0 || 
                       ((flags & (int)MethodTableFlags.InternalCorElementTypeExtraInfoMask) == (int)MethodTableFlags.InternalCorElementTypeExtraInfo_IfNotArrayThenClass))
             {
@@ -127,12 +121,9 @@ namespace System.Runtime.CLR
             {
                 return entity->MethodTable->Size;
             }
-            else
-            {
-                return entity->MethodTable->Size;
-            }
+            */
 
-		    return 0;
+            return entity->MethodTable->Size;
 		}
 
 		/// <summary>

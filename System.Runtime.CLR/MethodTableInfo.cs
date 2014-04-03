@@ -65,10 +65,7 @@ namespace System.Runtime.CLR
 	{		
         [FieldOffset(0)]
 	    public ObjectTypeInfo *ParentClass;
-
-        [FieldOffset(4)]
-        public IntPtr mdTypeDefinition;
-	    
+        
         [FieldOffset(16)]
 	    public MethodTableInfo *MethodsTable;
 	}
@@ -84,7 +81,7 @@ namespace System.Runtime.CLR
         InternalCorElementTypeExtraInfo_IfNotArrayThenClass         = 0x00040000,
         InternalCorElementTypeExtraInfo_IfNotArrayThenValueType     = 0x00060000, 
 
-        IfArrayThenSzArray                                          = 0x00020000,
+        IfArrayThenMultidim                                          = 0x00020000,
         IfArrayThenSharedByReferenceTypes                           = 0x00040000,
 
         ContainsPointers            = 0x00080000,
