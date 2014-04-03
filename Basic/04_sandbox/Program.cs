@@ -10,9 +10,9 @@ namespace _04_sandbox
     {
         private void methodInsideAppDomain(IntPtr startingIntPtr)
         {
-            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr), mt => true))
+            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr), mt => mt != 0))
             {
-                Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj, obj.GetType().Name, GCEx.SizeOf(obj));
+                Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj.Item, obj.Item.GetType().Name, GCEx.SizeOf(obj.Item));
             }
         }
 

@@ -45,7 +45,8 @@ namespace _07_catchingPinnedObjects2
                 var lostMemory = 0L;
 
                 // for each byte in virtual memory block, we trying to find strings
-                for (long ptr = (long) managedStart, end = (long) managedEnd; ptr < end; ptr++)
+                var stopwatch = Stopwatch.StartNew();
+                for (IntPtr* ptr = (IntPtr*)managedStart, end = (IntPtr *)managedEnd; ptr < end; ptr++)
                 {
                     if (IsCorrectMethodsTable(*(IntPtr*)ptr))
                     {
@@ -53,22 +54,22 @@ namespace _07_catchingPinnedObjects2
                         int size;
                         try
                         {
-                            size = GCEx.SizeOf((EntityInfo*) (ptr - IntPtr.Size));
+                            size = GCEx.SizeOf((EntityInfo*) (ptr - 1)) >> 2;
                         }
                         catch (OverflowException)
                         {
                             continue;
                         }
 
-                        if (ptr + size > (long) managedEnd)
+                        if (ptr + size > (long *) managedEnd)
                             continue;
 
                         {
-                            var gap = (ptr - IntPtr.Size) - (lastRecognized + ((lastRecognized == managedStart.ToInt64()) ? 0 : GCEx.SizeOf((EntityInfo*)lastRecognized)));
+                            var gap = (ptr - 1) - ((lastRecognized + ((lastRecognized == managedStart.ToInt64()) ? 0 : GCEx.SizeOf((EntityInfo*)lastRecognized))) >> 2);
 
-                            lostMemory += gap;
+                            lostMemory += (long)gap;
 
-                            var found = EntityPtr.ToInstance<object>((IntPtr) (ptr - IntPtr.Size));
+                            var found = EntityPtr.ToInstance<object>((IntPtr) (ptr - 1));
                             RegisterObject(objects, found);
 
                             var lastInChain = found;
@@ -79,11 +80,11 @@ namespace _07_catchingPinnedObjects2
                             }
 
                             lastRecognized = (long)EntityPtr.ToPointer(lastInChain);
-                            ptr = lastRecognized + GCEx.SizeOf(lastInChain);
+                            ptr = (IntPtr*)(lastRecognized + GCEx.SizeOf(lastInChain));
                         }
                     }
                 }
-
+                var timeToTakeSnapshot = stopwatch.ElapsedMilliseconds;
                 var foundSize = lostMemory;
                 var total = (long) managedEnd - (long) managedStart;
 
@@ -92,8 +93,8 @@ namespace _07_catchingPinnedObjects2
                     Console.WriteLine("{0:00000} : {1}", objects[type], type.FullName);
                 }
 
-                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}", foundSize, total,
-                    ((float) foundSize/total)*100, objects.Values.Sum());
+                Console.WriteLine("TOTAL UNRESOLVED: {0} from {1} ({2}%), objects total: {3}. Time taken: {4}", foundSize, total,
+                    ((float) foundSize/total)*100, objects.Values.Sum(), timeToTakeSnapshot);
                 Thread.CurrentThread.Priority = ThreadPriority.Normal;
             }
             Console.ReadKey();

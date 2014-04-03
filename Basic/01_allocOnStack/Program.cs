@@ -35,7 +35,7 @@ namespace _01_allocOnStack
             customerOnStack.x = 5;
             customerOnStack.y = 10;
 
-            // copy locally;
+            // copy locally to display
             var arr = new int[10];
             for (var i = 0; i < 10; i++)
             {

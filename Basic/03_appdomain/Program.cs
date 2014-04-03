@@ -8,9 +8,9 @@ namespace _03_appdomain
     {
         private void methodInsideAppDomain(IntPtr startingIntPtr)
         {
-            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr), mt => true))
+            foreach (var obj in GCEx.GetObjectsInSOH(EntityPtr.ToInstance<object>(startingIntPtr), mt => mt != 0))
             {
-                Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj, obj.GetType().Name, GCEx.SizeOf(obj));
+                Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj.Item, obj.Item.GetType().Name, GCEx.SizeOf(obj.Item));
             }
         }
 
@@ -34,7 +34,7 @@ namespace _03_appdomain
     {
         static void Main(string[] args)
         {
-            var obj= new object();
+            var obj = new object();
             var list = new List<int>(100);
             var objPtr = EntityPtr.ToPointer(obj);
             Console.ReadKey();

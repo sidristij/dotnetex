@@ -68,7 +68,7 @@ namespace _06_catchingPinnedObjects
 
                     // If string is found, we can iterate all objects after string.
                     var str = EntityPtr.ToInstance<object>((IntPtr) (strMtPointer - 4));
-                    foreach (var @object in GCEx.GetObjectsInSOH(str, (mt) => mt > highFreqHeapStart && mt <= highFreqHeapEnd && types.ContainsKey((IntPtr)mt)))
+                    foreach (var @object in GCEx.GetObjectsInSOH(str, mt => types.ContainsKey((IntPtr)mt)).Select(obj => obj.Item))
                     {
                         Console.Write("{0} -- ", @object.GetType().FullName);
 
@@ -102,7 +102,7 @@ namespace _06_catchingPinnedObjects
                             if (GCEx.SizeOf(unsafeObject) != (lastObjPtr - backptr + 4))
                                 break;
                             ;
-                            if (objects.Contains(unsafeObject))
+                            if (unsafeObject.GetType().IsSecurityTransparent || objects.Contains(unsafeObject))
                                 break;
 
                             if (GCEx.IsAchievableFrom(unsafeObject, gapEndObject,

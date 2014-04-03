@@ -135,7 +135,7 @@ namespace System.Runtime.CLR
 
         public void Dispose()
         {
-            Marshal.FreeHGlobal((IntPtr)_startingPointer);
+            Marshal.FreeHGlobal((IntPtr)_freeObjects);
         }
     }
 

@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace readingStructs
 {
+    /// <summary>
+    /// Getting and setting pointer to class
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public class EntityInfo
     {
@@ -22,10 +25,9 @@ namespace readingStructs
             public IntPtr Value;
         }
 
-        [FieldOffset(0)]
-        public RefPtr Reference;
-        [FieldOffset(0)]
-        public PIntPtr Pointer;
+        
+        [FieldOffset(0)] public RefPtr Reference;
+        [FieldOffset(0)] public PIntPtr Pointer;
 
         public EntityInfoPtr(EntityInfo methodTable)
         {

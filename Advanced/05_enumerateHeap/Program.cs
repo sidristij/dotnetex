@@ -44,7 +44,7 @@ namespace _05_enumerateHeap
             var strcount = 0;
             var firstFound = string.Empty;
             var first = false;
-            for (long strMtPointer = heapsOffset.ToInt64(), end = lastHeapByte.ToInt64(); strMtPointer < end; strMtPointer++)
+            for (long strMtPointer = (long)heapsOffset, end = (long)lastHeapByte; strMtPointer < end; strMtPointer++)
             {
                 try
                 {
@@ -65,9 +65,9 @@ namespace _05_enumerateHeap
                 }
             }
 
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => true))
+            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => mt != 0))
             {
-                Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
+                Console.WriteLine("{0}: {1}", obj.Item.GetType().Name, obj.Item);
                 count++;
             }
             Console.WriteLine("objects count: {0}, strings: {1}", count, strcount);

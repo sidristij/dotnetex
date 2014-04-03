@@ -22,7 +22,7 @@ namespace _06_redirectingMethod
 
         private static void StaticTests()
         {
-            MethodBase[] methods = new MethodBase[]
+            MethodBase[] methods =
             {
                 typeof(StaticClassA).GetMethod("A",BindingFlags.Static|BindingFlags.Public),
                 typeof(StaticClassA).GetMethod("B",BindingFlags.Static|BindingFlags.Public),
@@ -61,7 +61,7 @@ namespace _06_redirectingMethod
 
         private static void InstanceTests()
         {
-            MethodBase[] methods = new MethodBase[]
+            MethodBase[] methods =
             {
                 typeof(InstanceClassA).GetMethod("A",BindingFlags.Instance|BindingFlags.Public),
                 typeof(InstanceClassA).GetMethod("B",BindingFlags.Instance|BindingFlags.Public),
@@ -91,14 +91,14 @@ namespace _06_redirectingMethod
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void TestInstanceReplace()
         {
-            InstanceClassA a = new InstanceClassA();
+            var a = new InstanceClassA();
             a.A();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void TestInstanceReplaceJited()
         {
-            InstanceClassA a = new InstanceClassA();
+            var a = new InstanceClassA();
             a.A();
         }
     }

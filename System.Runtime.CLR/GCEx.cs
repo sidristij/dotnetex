@@ -110,8 +110,6 @@ namespace System.Runtime.CLR
                     return 4 * ((16 + 2 * length + 3) / 4);
                 }
             }
-            
-            /*
             else if ( (flags2 & (int)MethodTableFlags2.IsInterface) != 0 || 
                       ((flags & (int)MethodTableFlags.InternalCorElementTypeExtraInfoMask) == (int)MethodTableFlags.InternalCorElementTypeExtraInfo_IfNotArrayThenClass))
             {
@@ -121,7 +119,7 @@ namespace System.Runtime.CLR
             {
                 return entity->MethodTable->Size;
             }
-            */
+            
 
             return entity->MethodTable->Size;
 		}

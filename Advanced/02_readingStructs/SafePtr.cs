@@ -9,30 +9,28 @@ namespace sandbox
     [StructLayout(LayoutKind.Explicit, Size = 4)]
     public struct SafePtr
     {
-        private class ReferenceType
+        private class RefPtr
         {
             public object Reference;
         }
 
-        private class IntPtrWrapper
+        private class PIntPtr
         {
             public IntPtr IntPtr;
         }
 
-        [FieldOffset(0)]
-        private ReferenceType Obj;
+        [FieldOffset(0)] private RefPtr Obj;
 
-        [FieldOffset(0)]
-        private IntPtrWrapper Pointer;
+        [FieldOffset(0)] private PIntPtr Pointer;
 
         public static SafePtr Create(object obj)
         {
-            return new SafePtr { Obj = new ReferenceType { Reference = obj } };
+            return new SafePtr { Obj = new RefPtr { Reference = obj } };
         }
 
         public static SafePtr Create(IntPtr rIntPtr)
         {
-            return new SafePtr { Pointer = new IntPtrWrapper { IntPtr = rIntPtr } };
+            return new SafePtr { Pointer = new PIntPtr { IntPtr = rIntPtr } };
         }
 
         public IntPtr IntPtr
