@@ -5,3 +5,4 @@ _ReSharper.CLRTests/
 *.dotCover
 *.user
 *.DotSettings
+CPPCLR/Debug/

@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityPtr">
-      <HintPath>..\libs\EntityPtr.dll</HintPath>
+      <HintPath>..\02_methodTable\bin\Debug\EntityPtr.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

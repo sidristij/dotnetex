@@ -5,11 +5,11 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{CD832141-CAB0-40D8-B47E-57C267218980}</ProjectGuid>
+    <ProjectGuid>{438296AD-5A5A-45B6-BF30-BE283B589E33}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_06_catchingPinnedObjects</RootNamespace>
-    <AssemblyName>06_catchingPinnedObjects</AssemblyName>
+    <RootNamespace>_08_gettingPointerByHashCode</RootNamespace>
+    <AssemblyName>08_gettingPointerByHashCode</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -36,7 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityPtr">
-      <HintPath>..\..\Basic\02_methodTable\bin\Debug\EntityPtr.dll</HintPath>
+      <HintPath>..\libs\EntityPtr.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,9 +51,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\System.Runtime.CLR\System.Runtime.CLR.csproj">
-      <Project>{E3BC3AE5-C2AB-442E-B649-C37E7982207E}</Project>
-      <Name>System.Runtime.CLR</Name>
+    <ProjectReference Include="..\CPPCLR\CPPCLR.vcxproj">
+      <Project>{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}</Project>
+      <Name>CPPCLR</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

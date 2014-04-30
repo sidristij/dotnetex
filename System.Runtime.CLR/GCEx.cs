@@ -157,7 +157,7 @@ namespace System.Runtime.CLR
 
 			    var mt = (long)*(IntPtr*) (offset + IntPtr.Size);
 
-                if(!checker(mt))
+                if(size == 0 || !checker(mt))
 			        return false;
 
                 //if ((long)*(IntPtr*)(offset + IntPtr.Size) == 0) return false;

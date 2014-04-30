@@ -182,6 +182,9 @@ namespace _07_catchingPinnedObjects2
             internal uint Protect;
             internal uint Type;
         }
+
+        [DllImport("msvcrt.dll", EntryPoint = "memcpy", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        public static extern IntPtr memcpy(IntPtr dest, IntPtr src, UIntPtr count);
     }
 
     // ReSharper restore InconsistentNaming
