@@ -36,34 +36,20 @@ namespace _08_gettingPointerByHashCode
         {
             var helper = new CPPCLR.RegHelper();
             int esp=0;
-            helper.Read(ref esp);
+            helper.ForkPrepare(ref esp);
             helper.Write(esp);
 
             var @event = new ManualResetEvent(false);
 
-            MEMORY_BASIC_INFORMATION stackData = new MEMORY_BASIC_INFORMATION();
+            // Retrieving stack info
+            var stackData = new MEMORY_BASIC_INFORMATION();
             char* lastStackPtr = stackalloc char[1];
             VirtualQuery(new IntPtr(lastStackPtr), ref stackData, (IntPtr)sizeof(MEMORY_BASIC_INFORMATION));
+
             Console.WriteLine("{0}, {1}", (int)(IntPtr)stackData.BaseAddress, (int)stackData.RegionSize);
 
-            var stackSize = (int) stackData.RegionSize - (esp - (int) stackData.BaseAddress);
+            var stackCopy = 
 
-            new Thread(() =>
-            {
-                MEMORY_BASIC_INFORMATION stackData2 = new MEMORY_BASIC_INFORMATION();
-                char* lastStackPtr2 = stackalloc char[1];
-                VirtualQuery(new IntPtr(lastStackPtr2), ref stackData2, (IntPtr)sizeof(MEMORY_BASIC_INFORMATION));
-                Console.WriteLine("{0}, {1}", (int)(IntPtr)stackData2.BaseAddress, (int)stackData2.RegionSize);
-
-                helper.MemcpyAndSet((int)stackData2.BaseAddress + (int)stackData2.RegionSize - stackSize,
-                       (int)stackData.BaseAddress + (int)stackData.RegionSize - stackSize,
-                       stackSize, (int)stackData2.BaseAddress + (int)stackData2.RegionSize - stackSize);
-                /*
-                helper.
-                memcpy();
-                */
-                @event.Set();
-            }).Start();
 
             @event.WaitOne();
         }
