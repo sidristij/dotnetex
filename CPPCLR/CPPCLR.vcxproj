@@ -84,10 +84,10 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="CPPCLR.cpp" />
+    <ClCompile Include="RegHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.ico" />
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc" />

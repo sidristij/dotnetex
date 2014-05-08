@@ -1,31 +1,46 @@
 // This is the main DLL file.
 
+#pragma managed(push, off)
+
 #include "CPPCLR.h"
 
-#pragma managed
+#pragma managed(pop)
+
+using namespace System;
+using namespace System::Runtime::InteropServices;
+using namespace System::Threading;
 
 namespace CPPCLR {
 
-    public ref class RegHelper
+	static public ref class RegHelper
     {
-		 RegHelper_Unmanaged* helper;
+         // for unmanaged work with stack and so on
+         static RegHelper_Unmanaged* helper;
+
     public:
-		 void ForkPrepare(void *stackStart, int stackSize)
+         static void ForkPrepare(void *stackStart, int stackSize)
          {
-			 helper = new RegHelper_Unmanaged();
-			 helper->ForkPrepare(this, stackStart, stackSize);
-		 }
+             helper = new RegHelper_Unmanaged();
+             helper->ForkPrepare(stackStart, stackSize);
+         }
 
-		 void MakeThread()
-		 {
-			 Thread^ thread = gcnew Thread(gcnew ThreadStart(this, &InForkedThread));
+         static void MakeThread()
+         {
+			 Thread^ thread = gcnew Thread(gcnew ThreadStart(&InForkedThread));
              thread->Start();
-		 }
+         }
 
-		 void InForkedThread()
+         static void InForkedThread()
          {
-			 helper->InForkedThread();
-		 }
+             helper->InForkedThread();
+         }
     };
 }
+
+extern "C" __declspec(dllexport)
+void __stdcall MakeManagedThread() 
+{
+	CPPCLR::RegHelper::MakeThread();
+}
+
 

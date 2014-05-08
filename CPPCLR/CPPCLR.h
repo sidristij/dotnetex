@@ -1,20 +1,14 @@
 // CPPCLR.h
 
 #pragma once
+class StackInfo;
 
-using namespace System;
-using namespace System::Runtime::InteropServices;
-using namespace System::Threading;
-
-#pragma unmanaged
-
-class RegHelper_Unmanaged
+public class RegHelper_Unmanaged
 {
-    public:
-		void ForkPrepare(CPPCLR::RegHelper^ helper, void *stackStart, int stackSize);
-		void InForkedThread();
+private:	
+	StackInfo* stackInfo;
+
+public:
+	void ForkPrepare(void *stackStart, int stackSize);
+	void InForkedThread();
 };
-
-#pragma managed
-
-
