@@ -6,3 +6,6 @@ _ReSharper.CLRTests/
 *.user
 *.DotSettings
 CPPCLR/Debug/
+Debug/
+CLRTests.opensdf
+CLRTests.v11.suo
