@@ -27,15 +27,8 @@ namespace _07_catchingPinnedObjects2
 
             unsafe
             {
-                // "Suspend" other threads
-                Thread.CurrentThread.Priority = ThreadPriority.Highest;
-
                 // Get current heap ranges
                 IntPtr managedStart, managedEnd;
-
-                // Run GC before we need to have pinned state for all objects
-                //GC.Collect();
-                //GC.WaitForFullGCComplete();
 
                 Console.ReadKey();
                 GetManagedHeap(offset, out managedStart, out managedEnd);

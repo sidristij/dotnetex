@@ -51,7 +51,7 @@ Label0:
     }
 
     if(isforked)
-    {
+    {		
         return 1;
     }
 
@@ -86,9 +86,15 @@ Label0:
     MakeManagedThread(); 
 }
 
-void AdvancedThreading_Unmanaged::InForkedThread()
+/***
+ *
+ *  InForkedThread uses variable parameters count feature to 
+ *
+ */
+void AdvancedThreading_Unmanaged::InForkedThread(int isLastCall, int parentCallStackStart, ...)
 {
     void *stackStart;                     // 1 word
+    int stackEnd;                         // 1 word
     int stackSize;				          // 1 words
     unsigned short CS_EIP[3];
 
@@ -102,66 +108,90 @@ void AdvancedThreading_Unmanaged::InForkedThread()
 
     // Calculate size
     stackSize = stackData->RegionSize - ((int)stackStart - (int)stackData->BaseAddress);
-           
-    // make stack size higher than parent thread stack size via recursive call
-    if(stackSize < stackInfo->stackSize)
+    stackEnd = (int)stackData->BaseAddress + stackData->RegionSize;
+    
+    if(!isLastCall)
     {
-        InForkedThread();
-    }
-    else
-    {
-        // copy all parent thread stack data to local stack and fix all pushed registers
-        int size = stackInfo->stackSize;
-
-        // offset between parent stack copy and current stack;
-        int delta = (int)stackStart - (int)stackInfo->EBP;
-
-        // offset between parent stack start and its copy;
-        int delta_original = (int)stackInfo->stackData - (int)stackInfo->EBP;
-
-        short CSr = stackInfo->CS;
-        int EIPr = stackInfo->EIP;
-
-        // Setup CS:EIP 6-byte structure to make far jmp
-        *(int *)CS_EIP = EIPr;
-        CS_EIP[2] = CSr;
-        
-        int ebp_cur;
-
-        // calculate ranges
-        int beg = (int)stackInfo->stackData;
-        int end = beg + stackInfo->stackSize;
-        int baseFrom = (int) stackInfo->origStackStart;
-        int baseTo = baseFrom + (int)stackInfo->origStackSize;
-
-        // In stack copy we have many saved EPBs, which where actually one-way linked list.
-        // we need to fix copy to make these pointers correct for our thread's stack.
-        ebp_cur = beg;
-        while(true)
+        if(parentCallStackStart == 0)
         {
-            int val = *(int*)ebp_cur;
-
-            if(baseFrom <= val && val < baseTo)
-            {
-                int localOffset = val + delta_original;
-                *(int *)ebp_cur += delta;
-                ebp_cur = localOffset;
-            } 
-            else 
-                break;
+            InForkedThread(0, (int)stackStart);
         }
-        
-        // Replace our stack with fixed parent stack copy
-        // We couldn't call memcpy to avoid touching stack
-        for(int i = 0; i < size; i++)
+        else
         {
-            ((byte *)stackStart)[i] = ((byte *)stackInfo->stackData)[i];
-        };
+            int realStackSize = stackInfo->stackSize;
+            int realStackStart = stackEnd - realStackSize;
 
-        // jmp to Fork method (see below)
-        _asm {
-            push 1
-            jmp fword ptr [CS_EIP]
+                int callCost = parentCallStackStart - (int)stackStart;
+                int growSize = realStackSize - stackSize;
+                int toAdd = (growSize - callCost) >> 2; // size in words
+                int stackSize = toAdd << 2;
+
+                // add alignment
+                for (int i=0; i < toAdd; i++)
+                    __asm push 123
+
+                // call to move EBP/ESP by compiler
+                InForkedThread(1, toAdd);
+
+                // remove parameters from stack. Actually will never be called
+                __asm add ESP, toAdd
+        }
+    }
+        else 
+        {		
+            // copy all parent thread stack data to local stack and fix all pushed registers
+            int size = stackInfo->stackSize;
+
+            // offset between parent stack copy and current stack;
+            int delta = (int)stackStart - (int)stackInfo->EBP;
+
+            // offset between parent stack start and its copy;
+            int delta_original = (int)stackInfo->stackData - (int)stackInfo->EBP;
+
+            short CSr = stackInfo->CS;
+            int EIPr = stackInfo->EIP;
+
+            // Setup CS:EIP 6-byte structure to make far jmp
+            *(int *)CS_EIP = EIPr;
+            CS_EIP[2] = CSr;
+        
+            int ebp_cur;
+
+            // calculate ranges
+            int beg = (int)stackInfo->stackData;
+            int end = beg + stackInfo->stackSize;
+            int baseFrom = (int) stackInfo->origStackStart;
+            int baseTo = baseFrom + (int)stackInfo->origStackSize;
+
+            // In stack copy we have many saved EPBs, which where actually one-way linked list.
+            // we need to fix copy to make these pointers correct for our thread's stack.
+            ebp_cur = beg;
+            while(true)
+            {
+                int val = *(int*)ebp_cur;
+
+                if(baseFrom <= val && val < baseTo)
+                {
+                    int localOffset = val + delta_original;
+                    *(int *)ebp_cur += delta;
+                    ebp_cur = localOffset;
+                } 
+                else 
+                    break;
+            }
+        
+            // Replace our stack with fixed parent stack copy
+            // We couldn't call memcpy to avoid touching stack
+            for(int i = 0; i < size; i++)
+            {
+                ((byte *)stackStart)[i] = ((byte *)stackInfo->stackData)[i];
+            };
+
+            // jmp to Fork method (see below)
+            _asm {
+                push 1
+                jmp fword ptr [CS_EIP]
+            }
         }
     }
 }

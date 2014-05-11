@@ -34,7 +34,7 @@ namespace AdvancedThreading
 
          static void InForkedThread()
          {
-             helper->InForkedThread();
+             helper->InForkedThread(0, 0);
          }
     };
 }
