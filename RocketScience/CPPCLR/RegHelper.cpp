@@ -193,6 +193,5 @@ void AdvancedThreading_Unmanaged::InForkedThread(int isLastCall, int parentCallS
                 jmp fword ptr [CS_EIP]
             }
         }
-    }
 }
 
