@@ -9,81 +9,98 @@ void __stdcall MakeManagedThread();
 public class StackInfo
 {
 public:
+    int EAX, EBX, ECX, EDX;
+    int EDI, ESI;
     int ESP;
     int EBP;
     int EIP;
-    int stackSize;
-    int origStackStart;
-    int origStackSize;
     short CS;
-    void *stackData;
+    void *frame;
+    int size;
+    int origStackStart, origStackSize;
 };
 
 volatile static StackInfo* stackInfo;
 
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
-    void *stackStart;                     // 1 word
-    int stackSize;				          // 1 words
-    void *copy;                           // 1 word
     int ESPr, EBPr, EIPr;                 // 3 words
-    int short CSr;
+    int EAXr, EBXr, ECXr, EDXr;
+    int EDIr, ESIr;
+    short CSr;
     StackInfo* info;                      // 1 word
-    MEMORY_BASIC_INFORMATION* stackData;  // 1 word
     int isforked;
 
-    // ESP = EBP + 8 * wordSize = EBP + 256 on 32-bit
-
-    // Save stack registers
+    // Save ALL registers
     _asm 
     {
+        mov EAXr, EAX
+        mov EBXr, EBX
+        mov ECXr, ECX
+        mov EDXr, EBX
+        mov EDIr, EDI
+        mov ESIr, ESI
         mov EBPr, EBP
         mov ESPr, ESP
-
-        push 0
-        mov CSr,  CS
+        
+    // Save CS:EIP for far jmp
+        mov CSr, CS
         mov EIPr, offset Label0
+
+    // Save mark for this method, from what place it was called
+        push 0
     }
 Label0:
-    _asm
-    {
-        pop  isforked
-    }
-
+    __asm pop isforked
+        
     if(isforked)
-    {		
+    {
+        EBPr = stackInfo->EBP;
+        __asm mov EBP, EBPr
+		__asm mov ESP, EBP
         return 1;
     }
 
-    stackStart = (void *) EBPr;
 
+    //
+    //  We need to copy stack part from our method to user code method including its locals in stack
+    //
+    int localsStart = EBPr;                                // our EBP points to EBP value for parent method
+    int localsEnd = *(int *)*(int *)*(int *)*(int *)EBPr;  // points to end of user's method's locals
+
+    byte *arr = new byte[localsEnd - localsStart];
+    memcpy(arr, (void*)localsStart, localsEnd - localsStart);
+
+    
     // Get information about stack pages
-    stackData = new MEMORY_BASIC_INFORMATION();            
-    VirtualQuery(stackStart, stackData, sizeof(MEMORY_BASIC_INFORMATION));
-    
-    // Calculating stack end
-    stackSize = stackData->RegionSize - ((int)stackStart - (int)stackData->BaseAddress);
-    
-    // make stack copy
-    copy = new byte[stackSize];
-    memcpy_s(copy, stackSize, stackStart, stackSize);
-    
+    MEMORY_BASIC_INFORMATION *stackData = new MEMORY_BASIC_INFORMATION();            
+    VirtualQuery((void *)EBPr, stackData, sizeof(MEMORY_BASIC_INFORMATION));
+
     // fill StackInfo structure
     info = new StackInfo();
     info->ESP = ESPr;
     info->EBP = EBPr;
-    info->CS  = CSr;
     info->EIP = EIPr;
+    info->CS = CSr;
+
+    info->EAX = EAXr;
+    info->EBX = EBXr;
+    info->ECX = ECXr;
+    info->EDX = EDXr;
+    info->EDI = EDIr;
+    info->ESI = ESIr;
     
     info->origStackStart = (int)stackData->BaseAddress;
     info->origStackSize = (int)stackData->RegionSize;
 
-    info->stackSize = stackSize;
-    info->stackData = copy;
+    info->frame = arr;
+    info->size = (localsEnd - localsStart);
     stackInfo = info;
 
     // call managed new Thread().Start() to make fork
     MakeManagedThread(); 
+
+    return 0;
 }
 
 /***
@@ -91,107 +108,95 @@ Label0:
  *  InForkedThread uses variable parameters count feature to 
  *
  */
-void AdvancedThreading_Unmanaged::InForkedThread(int isLastCall, int parentCallStackStart, ...)
+void AdvancedThreading_Unmanaged::InForkedThread()
 {
-    void *stackStart;                     // 1 word
-    int stackEnd;                         // 1 word
-    int stackSize;				          // 1 words
-    unsigned short CS_EIP[3];
-
-    _asm {
-        mov stackStart, EBP
-    }
+    int EBPr, ESPr;   			          
+    int EAXr, EBXr, ECXr, EDXr;
+    int EDIr, ESIr;
+    short CS_EIP[3];
     
-    // Get local thread stack info
-    MEMORY_BASIC_INFORMATION* stackData = new MEMORY_BASIC_INFORMATION();            
-    VirtualQuery(stackStart, stackData, sizeof(MEMORY_BASIC_INFORMATION));
 
-    // Calculate size
-    stackSize = stackData->RegionSize - ((int)stackStart - (int)stackData->BaseAddress);
-    stackEnd = (int)stackData->BaseAddress + stackData->RegionSize;
+    void * frame = stackInfo->frame;
+    int size = stackInfo->size;
+
+    // Setup FWORD for far jmp
+    *(int*)CS_EIP = stackInfo->EIP;
+    CS_EIP[2] = stackInfo->CS;
+
+    // localize registers values
+    EAXr = stackInfo->EAX;
+    EBXr = stackInfo->EBX;
+    ECXr = stackInfo->ECX;
+    EDXr = stackInfo->EDX;
+    EDIr = stackInfo->EDI;
+    ESIr = stackInfo->ESI;
     
-    if(!isLastCall)
+    // calculate ranges
+    int beg = (int)stackInfo->frame;
+    int end = beg + stackInfo->size;
+    int baseFrom = (int) stackInfo->origStackStart;
+    int baseTo = baseFrom + (int)stackInfo->origStackSize;
+    
+    __asm mov ESPr, ESP
+
+    // target = EBP[ - locals - EBP - ret - whole stack frames copy]
+    int targetToCopy = ESPr - 8 - stackInfo->size;
+
+    // offset between parent stack and current stack;
+    int delta_to_target = (int)targetToCopy - (int)stackInfo->EBP;
+
+    // offset between parent stack start and its copy;
+    int delta_to_copy = (int)stackInfo->frame - (int)stackInfo->EBP;
+
+    // In stack copy we have many saved EPBs, which where actually one-way linked list.
+    // we need to fix copy to make these pointers correct for our thread's stack.
+    int ebp_cur = beg;
+    while(true)
     {
-        if(parentCallStackStart == 0)
+        int val = *(int*)ebp_cur;
+
+        if(baseFrom <= val && val < baseTo)
         {
-            InForkedThread(0, (int)stackStart);
-        }
-        else
-        {
-            int realStackSize = stackInfo->stackSize;
-            int realStackStart = stackEnd - realStackSize;
-
-                int callCost = parentCallStackStart - (int)stackStart;
-                int growSize = realStackSize - stackSize;
-                int toAdd = (growSize - callCost) >> 2; // size in words
-                int stackSize = toAdd << 2;
-
-                // add alignment
-                for (int i=0; i < toAdd; i++)
-                    __asm push 123
-
-                // call to move EBP/ESP by compiler
-                InForkedThread(1, toAdd);
-
-                // remove parameters from stack. Actually will never be called
-                __asm add ESP, toAdd
-        }
-    }
+            int localOffset = val + delta_to_copy;
+            *(int *)ebp_cur += delta_to_target;
+            ebp_cur = localOffset;
+        } 
         else 
-        {		
-            // copy all parent thread stack data to local stack and fix all pushed registers
-            int size = stackInfo->stackSize;
+            break;
+    }
 
-            // offset between parent stack copy and current stack;
-            int delta = (int)stackStart - (int)stackInfo->EBP;
+    // for ret
+    
+	__asm push offset Label0
+    __asm push EBP
+	
+	for(int i = (size >> 2) - 1; i >= 0; i--)
+    {
+		int val = ((int *)beg)[i];
+		__asm push val;
+    };
+	
+	stackInfo->EBP = targetToCopy;
 
-            // offset between parent stack start and its copy;
-            int delta_original = (int)stackInfo->stackData - (int)stackInfo->EBP;
+	// restore registers, push 1 for Fork() and jmp
+    _asm {        
+        push EBXr
+        push ECXr
+        push EDXr
+        push ESIr
+        push EDIr
+        pop EDI
+        pop ESI
+        pop EDX
+        pop ECX
+        pop EBX
+				
+        push 1
+        jmp fword ptr CS_EIP
+    }
 
-            short CSr = stackInfo->CS;
-            int EIPr = stackInfo->EIP;
+Label0:
 
-            // Setup CS:EIP 6-byte structure to make far jmp
-            *(int *)CS_EIP = EIPr;
-            CS_EIP[2] = CSr;
-        
-            int ebp_cur;
-
-            // calculate ranges
-            int beg = (int)stackInfo->stackData;
-            int end = beg + stackInfo->stackSize;
-            int baseFrom = (int) stackInfo->origStackStart;
-            int baseTo = baseFrom + (int)stackInfo->origStackSize;
-
-            // In stack copy we have many saved EPBs, which where actually one-way linked list.
-            // we need to fix copy to make these pointers correct for our thread's stack.
-            ebp_cur = beg;
-            while(true)
-            {
-                int val = *(int*)ebp_cur;
-
-                if(baseFrom <= val && val < baseTo)
-                {
-                    int localOffset = val + delta_original;
-                    *(int *)ebp_cur += delta;
-                    ebp_cur = localOffset;
-                } 
-                else 
-                    break;
-            }
-        
-            // Replace our stack with fixed parent stack copy
-            // We couldn't call memcpy to avoid touching stack
-            for(int i = 0; i < size; i++)
-            {
-                ((byte *)stackStart)[i] = ((byte *)stackInfo->stackData)[i];
-            };
-
-            // jmp to Fork method (see below)
-            _asm {
-                push 1
-                jmp fword ptr [CS_EIP]
-            }
-        }
-}
+    return;
+ }
 

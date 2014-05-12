@@ -56,6 +56,8 @@
       <OmitFramePointers>false</OmitFramePointers>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <CallingConvention>Cdecl</CallingConvention>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -91,6 +93,7 @@
     <ClCompile Include="RegHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\01_forkingthread\program.cs" />
     <None Include="app.ico" />
   </ItemGroup>
   <ItemGroup>

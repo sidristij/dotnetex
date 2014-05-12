@@ -19,10 +19,11 @@ namespace AdvancedThreading
          static AdvancedThreading_Unmanaged* helper;
 
     public:
+         
          static bool CloneThread()
          {
              helper = new AdvancedThreading_Unmanaged();
-             return helper->ForkImpl() == 1;
+             return helper->ForkImpl();
          }
 
     internal:
@@ -34,7 +35,7 @@ namespace AdvancedThreading
 
          static void InForkedThread()
          {
-             helper->InForkedThread(0, 0);
+             helper->InForkedThread();
          }
     };
 }
