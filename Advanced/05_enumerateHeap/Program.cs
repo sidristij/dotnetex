@@ -1,29 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CLR;
 using System.Runtime.InteropServices;
-using System.Security;
-using System.Text;
 
 namespace _05_enumerateHeap
 {
-    class Program
+    static class Program
     {
-        internal const String KERNEL32 = "kernel32.dll";
-        internal static IntPtr StringsTable;
+        private const String Kernel32 = "kernel32.dll";
+        private static IntPtr StringsTable;
+        private static IntPtr MscorlibModule;
 
-        static Program()
+        static unsafe Program()
         {
             StringsTable = typeof(string).TypeHandle.Value;
+            MscorlibModule = (IntPtr)((MethodTableInfo*)typeof(string).TypeHandle.Value)->ModuleInfo;
         }
 
-        static unsafe void Main(string[] args)
+        static void Main()
         {
-            var offset = IntPtr.Zero;
-
             IntPtr heapsOffset, lastHeapByte;
-            GetManagedHeap(offset, out heapsOffset, out lastHeapByte, true);
+            GetManagedHeap(out heapsOffset, out lastHeapByte);
 
             // looking up structures
             if (heapsOffset != IntPtr.Zero)
@@ -38,36 +34,29 @@ namespace _05_enumerateHeap
         /// </summary>
         /// <param name="heapsOffset">Heap starting point</param>
         /// <param name="lastHeapByte">Heap last byte</param>
-        private static unsafe void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
+        private static void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
         {
             var count = 0;
             var strcount = 0;
             var firstFound = string.Empty;
             var first = false;
-            for (long strMtPointer = (long)heapsOffset, end = (long)lastHeapByte; strMtPointer < end; strMtPointer++)
+            for (int strMtPointer = (int)heapsOffset, end = (int)lastHeapByte; strMtPointer < (end - IntPtr.Size); strMtPointer++)
             {
-                try
+                if (IsString(strMtPointer))
                 {
-                    if (IsString(strMtPointer))
+                    Console.WriteLine(EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4)));
+                    if (!first)
                     {
-                        if (!first)
-                        {
-                            firstFound = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
-                            first = true;
-                        }
-
-                        strcount++;
+                        firstFound = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
+                        first = true;
                     }
-                }
-                catch
-                {
-                    ;
+                    strcount++;
                 }
             }
 
-            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => mt != 0))
+            foreach (var obj in GCEx.GetObjectsInSOH(firstFound, mt => IsCorrectMethodsTable((IntPtr) mt)))
             {
-                Console.WriteLine("{0}: {1}", obj.Item.GetType().Name, obj.Item);
+                Console.WriteLine("   {0}: {1}", obj.Item.GetType().Name, obj.Item);
                 count++;
             }
             Console.WriteLine("objects count: {0}, strings: {1}", count, strcount);
@@ -75,86 +64,86 @@ namespace _05_enumerateHeap
 
         private static unsafe bool IsString(long strMtPointer)
         {
-            int count;
-            if (*(IntPtr*) strMtPointer == StringsTable)
+            if (*(IntPtr*) strMtPointer != StringsTable) return false;
+
+            var entity = strMtPointer - IntPtr.Size; // move to sync block
+            if (GCEx.MajorNetVersion >= 4)
             {
-                var entity = strMtPointer - IntPtr.Size; // move to sync block
-                if (GCEx.MajorNetVersion >= 4)
+                var length = *(int*) ((int) entity + 8);
+                if (length < 2048 && *(short*) ((int) entity + 12 + length*2) == 0)
                 {
-                    var length = *(int*) ((int) entity + 8);
-                    if (length < 2048 && *(short*) ((int) entity + 12 + length*2) == 0)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
-                else
+            }
+            else
+            {
+                var length = *(int*) ((int) entity + 12);
+                if (length < 2048 && *(short*) ((int) entity + 14 + length*2) == 0)
                 {
-                    var length = *(int*) ((int) entity + 12);
-                    if (length < 2048 && *(short*) ((int) entity + 14 + length*2) == 0)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
             return false;
         }
 
+        private static unsafe bool IsCorrectMethodsTable(IntPtr mt)
+        {
+            if (mt == IntPtr.Zero) return false;
+
+            if (PointsToAllocated(mt))
+                if (PointsToAllocated((IntPtr)((MethodTableInfo*)mt)->EEClass))
+                    if (PointsToAllocated((IntPtr)((MethodTableInfo*)mt)->EEClass->MethodsTable))
+                        return ((IntPtr)((MethodTableInfo*)mt)->EEClass->MethodsTable == mt) /*||
+                               ((IntPtr)((MethodTableInfo*)mt)->ModuleInfo == MscorlibModule)*/;
+
+            return false;
+        }
+        
+        private static bool PointsToAllocated(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) return false;
+            return !IsBadReadPtr(ptr, 32);
+        }
+
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte, bool heaponly)
+        private static unsafe void GetManagedHeap(out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
             var somePtr = EntityPtr.ToPointer("sample");
-            var memoryBasicInformation = new MEMORY_BASIC_INFORMATION();
+            var meminfo = new MEMORY_BASIC_INFORMATION();
 
-            heapsOffset = IntPtr.Zero;
-            lastHeapByte = IntPtr.Zero;
-            unsafe
-            {
-                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr) Marshal.SizeOf(memoryBasicInformation)) !=
-                       IntPtr.Zero)
-                {
-                    var isManagedHeap = (long) memoryBasicInformation.BaseAddress < (long) somePtr &&
-                                        (long) somePtr <
-                                        ((long) memoryBasicInformation.BaseAddress + (long) memoryBasicInformation.RegionSize);
 
-                    if (isManagedHeap || !heaponly)
-                    {
-                        Console.WriteLine(
-                            "{7} base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
-                            (int) memoryBasicInformation.BaseAddress,
-                            memoryBasicInformation.RegionSize,
-                            memoryBasicInformation.Type,
-                            (int) memoryBasicInformation.AllocationBase,
-                            memoryBasicInformation.State,
-                            memoryBasicInformation.Protect,
-                            memoryBasicInformation.AllocationProtect,
-                            isManagedHeap ? " ** " : "    ");
-                    }
+            VirtualQuery(somePtr, ref meminfo, (IntPtr)Marshal.SizeOf(meminfo));
 
-                    if (isManagedHeap)
-                    {
-                        heapsOffset = offset;
-                        lastHeapByte = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                    }
-
-                    offset = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                }
-            }
+            Console.WriteLine(
+                "Base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
+                (int) meminfo.BaseAddress,
+                (int) meminfo.RegionSize,
+                meminfo.Type,
+                (int) meminfo.AllocationBase,
+                meminfo.State,
+                meminfo.Protect,
+                meminfo.AllocationProtect);
+        
+            heapsOffset = (IntPtr) meminfo.BaseAddress;
+            lastHeapByte = (IntPtr) ((long) heapsOffset + (long) meminfo.RegionSize);
         }
 
 
         // ReSharper disable InconsistentNaming
-
-        [DllImport(KERNEL32, SetLastError = true)]
-        unsafe internal static extern IntPtr VirtualQuery(
+        [DllImport(Kernel32, SetLastError = true)]
+        private static extern IntPtr VirtualQuery(
             IntPtr address,
             ref MEMORY_BASIC_INFORMATION buffer,
             IntPtr sizeOfBuffer
         );
 
+        [DllImport(Kernel32, SetLastError = true)]
+        internal static extern bool IsBadReadPtr(IntPtr address, uint ucb);
+
         [StructLayout(LayoutKind.Sequential)]
-        internal unsafe struct MEMORY_BASIC_INFORMATION
+        private unsafe struct MEMORY_BASIC_INFORMATION
         {
             internal void* BaseAddress;
             internal void* AllocationBase;
@@ -164,26 +153,6 @@ namespace _05_enumerateHeap
             internal uint Protect;
             internal uint Type;
         }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct SYSTEM_INFO {
-            internal int dwOemId;    // This is a union of a DWORD and a struct containing 2 WORDs.
-            internal int dwPageSize;
-            internal IntPtr lpMinimumApplicationAddress;
-            internal IntPtr lpMaximumApplicationAddress;
-            internal IntPtr dwActiveProcessorMask;
-            internal int dwNumberOfProcessors;
-            internal int dwProcessorType;
-            internal int dwAllocationGranularity;
-            internal short wProcessorLevel;
-            internal short wProcessorRevision;
-        }
- 
-        [DllImport(KERNEL32, SetLastError = true)]
-        [SecurityCritical]
-        internal static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
-    
     }
-    
     // ReSharper restore InconsistentNaming
 }

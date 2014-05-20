@@ -16,10 +16,8 @@ namespace _04_virtualMemory
 
         static void Main()
         {
-            var offset = IntPtr.Zero;
-
             IntPtr heapsOffset, lastHeapByte;
-            GetManagedHeap(offset, out heapsOffset, out lastHeapByte);
+            GetManagedHeap(out heapsOffset, out lastHeapByte);
 
             // looking up structures
             if (heapsOffset != IntPtr.Zero)
@@ -76,7 +74,7 @@ namespace _04_virtualMemory
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte)
+        private static unsafe void GetManagedHeap(out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
             var somePtr = EntityPtr.ToPointer(new object());
             var meminfo = new MEMORY_BASIC_INFORMATION();
