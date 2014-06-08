@@ -7,8 +7,8 @@ namespace _04_virtualMemory
 {
     class Program
     {
-        internal const String KERNEL32 = "kernel32.dll";
         internal static IntPtr StringsTable;
+        internal const String Kernel32 = "kernel32.dll";
 
         static Program()
         {
@@ -61,7 +61,7 @@ namespace _04_virtualMemory
         private static unsafe bool IsString(long strMtPointer)
         {
             int count;
-            if (*(IntPtr*) strMtPointer == StringsTable)
+            if (GCEx.PointsToAllocated((IntPtr)strMtPointer) && *(IntPtr*) strMtPointer == StringsTable)
             {
                 var entity = strMtPointer - IntPtr.Size; // move to sync block
                 if (GCEx.MajorNetVersion >= 4)
@@ -131,7 +131,7 @@ namespace _04_virtualMemory
 
         // ReSharper disable InconsistentNaming
 
-        [DllImport(KERNEL32, SetLastError = true)]
+        [DllImport(Kernel32, SetLastError = true)]
         unsafe internal static extern IntPtr VirtualQuery(
             IntPtr address,
             ref MEMORY_BASIC_INFORMATION buffer,
@@ -164,10 +164,9 @@ namespace _04_virtualMemory
             internal short wProcessorRevision;
         }
  
-        [DllImport(KERNEL32, SetLastError = true)]
+        [DllImport(Kernel32, SetLastError = true)]
         [SecurityCritical]
         internal static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
-    
     }
     
     // ReSharper restore InconsistentNaming

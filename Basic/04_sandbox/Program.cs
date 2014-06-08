@@ -40,13 +40,16 @@ namespace _04_sandbox
         static void Main(string[] args)
         {
             var obj = new object();
-            var list = new List<int>(100);
             var objPtr = EntityPtr.ToPointer(obj);
+
+            var list = new List<int>(100);
 
             AppDomainRunner.Go(objPtr);
 
             Console.WriteLine("Still alive: {0}", obj);
+
             Console.ReadKey();
+            Console.WriteLine(list.Count);
         }
     }
 }

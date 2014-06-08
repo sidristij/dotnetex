@@ -7,8 +7,10 @@ namespace System.Runtime.CLR
 	{
 	    public static readonly int MajorNetVersion;
 		static readonly IntPtr StringTypeHandle;
-		
-		static GCEx()
+
+        internal const String Kernel32 = "kernel32.dll";
+        
+        static GCEx()
 		{
 			MajorNetVersion = Environment.Version.Major;
 			StringTypeHandle = typeof (string).TypeHandle.Value;
@@ -171,6 +173,12 @@ namespace System.Runtime.CLR
 			}
 		}
 
+        public static bool PointsToAllocated(IntPtr ptr)
+        {
+            if (ptr == IntPtr.Zero) return false;
+            return !IsBadReadPtr(ptr, 32);
+        }
+
 	    public class SohEnumeratorItem
 	    {
 	        public object Item;
@@ -193,10 +201,10 @@ namespace System.Runtime.CLR
 			    yield return enumItem;
                 
 			    var @array = current as Array;
-			    if (@array != null && !@array.GetType().GetElementType().IsValueType)
+			    if (array != null && !array.GetType().GetElementType().IsValueType)
 			    {
 			        enumItem.IsArrayItem = true;
-			        foreach (var item in @array)
+			        foreach (var item in array)
 			        {
 			            enumItem.Item = item;
 			            if (item != null)
@@ -216,7 +224,7 @@ namespace System.Runtime.CLR
 
         public static bool IsAchievableFrom(object from, object to, Predicate<long> checker)
 	    {
-            var current = from;
+            var current = @from;
             int cursize;
 
             do
@@ -230,5 +238,8 @@ namespace System.Runtime.CLR
 
 	        return false;
 	    }
+
+	    [DllImport(Kernel32, SetLastError = true)]
+	    internal static extern unsafe bool IsBadReadPtr(IntPtr address, uint ucb);
 	}
 }
