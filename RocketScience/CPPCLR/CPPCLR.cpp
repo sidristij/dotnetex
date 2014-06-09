@@ -17,13 +17,23 @@ namespace AdvancedThreading
     {
          // for unmanaged work with stack and so on
          static AdvancedThreading_Unmanaged* helper;
+		 static ManualResetEvent^ resetEvent;
 
     public:
          
          static bool CloneThread()
          {
+			 resetEvent = gcnew ManualResetEvent(false);
              helper = new AdvancedThreading_Unmanaged();
-             return helper->ForkImpl();
+             bool forked = helper->ForkImpl();
+			 if(!forked)
+			 {
+				 resetEvent->WaitOne();
+			 } else
+			 {
+				 resetEvent->Set();
+			 }
+			 return forked;
          }
 
     internal:
