@@ -4,6 +4,20 @@
 
 #include "CPPCLR.h"
 
+int ReadFS()
+{
+	int data;
+
+	_asm {
+
+		push EAX
+		mov EAX, FS:[0]
+		mov data, EAX
+		pop EAX
+	}
+	return data;
+}
+
 #pragma managed(pop)
 
 using namespace System;
@@ -34,7 +48,12 @@ namespace AdvancedThreading
 				 resetEvent->Set();
 			 }
 			 return forked;
-         }
+         }		 
+
+		 static int GetFS()
+		 {
+			 return ReadFS();
+		 }
 
     internal:
          static void MakeThread()
