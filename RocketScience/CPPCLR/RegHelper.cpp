@@ -57,7 +57,7 @@ Label0:
     {
         EBPr = stackInfo->EBP;
         __asm mov EBP, EBPr
-		__asm mov ESP, EBP
+        __asm mov ESP, EBP
         return 1;
     }
 
@@ -167,18 +167,18 @@ void AdvancedThreading_Unmanaged::InForkedThread()
 
     // for ret
     
-	__asm push offset Label0
+    __asm push offset Label0
     __asm push EBP
-	
-	for(int i = (size >> 2) - 1; i >= 0; i--)
+    
+    for(int i = (size >> 2) - 1; i >= 0; i--)
     {
-		int val = ((int *)beg)[i];
-		__asm push val;
+        int val = ((int *)beg)[i];
+        __asm push val;
     };
-	
-	stackInfo->EBP = targetToCopy;
+    
+    stackInfo->EBP = targetToCopy;
 
-	// restore registers, push 1 for Fork() and jmp
+    // restore registers, push 1 for Fork() and jmp
     _asm {        
         push EBXr
         push ECXr
@@ -190,7 +190,7 @@ void AdvancedThreading_Unmanaged::InForkedThread()
         pop EDX
         pop ECX
         pop EBX
-				
+                
         push 1
         jmp fword ptr CS_EIP
     }

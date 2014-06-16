@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using AdvancedThreading;
 
@@ -10,51 +11,39 @@ namespace ForkingThreadSample
 
         static void Main(string[] args)
         {
-            M1();
+            Console.WriteLine("Press [Enter] to start");
+            Console.ReadKey();
 
+            Console.WriteLine("Splitting to new thread:");
+            MakeFork(false);
+
+            Console.WriteLine("Splitting to thread pool:");
+            MakeFork(true);
+            
             Console.WriteLine("Fork called successfully");
             Console.ReadKey();
         }
 
-        static void M1()
+        static void MakeFork(bool inThreadpool)
         {
-            InForkedFlow(Fork.CloneThread());
-        }
+            var cdevent = new CountdownEvent(2);
+            var sameLocalVariable = 123;
+            var stopwatch = Stopwatch.StartNew();
 
-        static void InForkedFlow(bool isChildThread)
-        {
-            try
+            // Splitting current thread flow to two threads
+            var forked = Fork.CloneThread(inThreadpool);
+
+            lock (_sync)
             {
-                var sameLocalVariable = 123;
-                var cdevent = new CountdownEvent(2);
-                if (isChildThread)
-                {
-                    lock (_sync)
-                    {
-                        Console.ReadKey();
-                        Console.WriteLine("in forked thread: {0}, tid: {1} ", sameLocalVariable, Thread.CurrentThread.ManagedThreadId);
-                        cdevent.Signal();
-                        throw new Exception("Hello from try block");
-                    }
-                }
-                else
-                {
-                    lock (_sync)
-                    {
-                        Console.ReadKey();
-                        Console.WriteLine("in parent thread: {0}, tid: {1} ", sameLocalVariable, Thread.CurrentThread.ManagedThreadId);
-                        cdevent.Signal();
-                        throw new Exception("Hello from try block");
-                    }
-                }
+                Console.WriteLine("in {0} thread: {1}, local value: {2}, time to enter = {3} ms",
+                    forked ? "forked" : "parent",
+                    Thread.CurrentThread.ManagedThreadId,
+                    sameLocalVariable, 
+                    stopwatch.ElapsedMilliseconds);
+                cdevent.Signal();
             }
-            catch (Exception exception)
-            {
-                lock (_sync)
-                {
-                    Console.WriteLine("Catch called successfully: {0}", exception.Message);
-                }
-            }
+
+            // Here forked thread's life will be stopped
         }
     }
 }
