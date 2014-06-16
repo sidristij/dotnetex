@@ -4,10 +4,23 @@
 
 #include "CPPCLR.h"
 
+int ReadFS()
+{
+	int data;
+
+	_asm {
+
+		push EAX
+		mov EAX, FS:[0]
+		mov data, EAX
+		pop EAX
+	}
+	return data;
+}
+
 #pragma managed(pop)
 
 using namespace System;
-using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Threading;
 
@@ -18,36 +31,37 @@ namespace AdvancedThreading
     {
          // for unmanaged work with stack and so on
          static AdvancedThreading_Unmanaged* helper;
-         static ManualResetEvent^ resetEvent;
+		 static ManualResetEvent^ resetEvent;
 
     public:
          
-         [MethodImplAttribute(MethodImplOptions::NoInlining)]
          static bool CloneThread()
          {
-             resetEvent = gcnew ManualResetEvent(false);
+			 resetEvent = gcnew ManualResetEvent(false);
              helper = new AdvancedThreading_Unmanaged();
              bool forked = helper->ForkImpl();
-             if(!forked)
-             {
-                 resetEvent->WaitOne();
-             } else
-             {
-                 resetEvent->Set();
-             }
-             return forked;
-         }
+			 if(!forked)
+			 {
+				 resetEvent->WaitOne();
+			 } else
+			 {
+				 resetEvent->Set();
+			 }
+			 return forked;
+         }		 
+
+		 static int GetFS()
+		 {
+			 return ReadFS();
+		 }
 
     internal:
-
-         [MethodImplAttribute(MethodImplOptions::NoInlining)]
          static void MakeThread()
          {
              Thread^ thread = gcnew Thread(gcnew ThreadStart(&InForkedThread));
              thread->Start();
          }
-		 
-         [MethodImplAttribute(MethodImplOptions::NoInlining)]
+
          static void InForkedThread()
          {
              helper->InForkedThread();
@@ -63,3 +77,5 @@ void __stdcall MakeManagedThread()
 {
     AdvancedThreading::Fork::MakeThread();
 }
+
+
