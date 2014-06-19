@@ -5,22 +5,20 @@ using System.Security;
 
 namespace _04_virtualMemory
 {
-    class Program
+    static class Program
     {
-        internal static IntPtr StringsTable;
-        internal const String Kernel32 = "kernel32.dll";
+        private static readonly IntPtr StringsTable;
+        private const String Kernel32 = "kernel32.dll";
 
         static Program()
         {
             StringsTable = typeof(string).TypeHandle.Value;
         }
 
-        static unsafe void Main(string[] args)
+        static void Main(string[] args)
         {
-            var offset = IntPtr.Zero;
-
             IntPtr heapsOffset, lastHeapByte;
-            GetManagedHeap(offset, out heapsOffset, out lastHeapByte, true);
+            GetManagedHeap(out heapsOffset, out lastHeapByte);
 
             // looking up structures
             if (heapsOffset != IntPtr.Zero)
@@ -35,26 +33,20 @@ namespace _04_virtualMemory
         /// </summary>
         /// <param name="heapsOffset">Heap starting point</param>
         /// <param name="lastHeapByte">Heap last byte</param>
-        private static unsafe void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
+        private static void EnumerateStrings(IntPtr heapsOffset, IntPtr lastHeapByte)
         {
             var count = 0;
             
             for (long strMtPointer = heapsOffset.ToInt64(), end = lastHeapByte.ToInt64(); strMtPointer < end; strMtPointer++)
             {
-                try
+                if (IsString(strMtPointer))
                 {
-                    if (IsString(strMtPointer))
-                    {
-                        var str = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
-                        Console.WriteLine(str);
-                        count++;
-                    }
-                }
-                catch
-                {
-                    ;
+                    var str = EntityPtr.ToInstance<string>(new IntPtr(strMtPointer - 4));
+                    Console.WriteLine(str);
+                    count++;
                 }
             }
+
             Console.WriteLine("Total count: {0}", count);
         }
 
@@ -87,49 +79,23 @@ namespace _04_virtualMemory
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte, bool heaponly)
+        private static void GetManagedHeap(out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
-            var somePtr = EntityPtr.ToPointer("sample");
+            var offset = EntityPtr.ToPointer(new object());
+
             var memoryBasicInformation = new MEMORY_BASIC_INFORMATION();
 
-            heapsOffset = IntPtr.Zero;
-            lastHeapByte = IntPtr.Zero;
             unsafe
             {
-                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr) Marshal.SizeOf(memoryBasicInformation)) !=
-                       IntPtr.Zero)
-                {
-                    var isManagedHeap = (long) memoryBasicInformation.BaseAddress < (long) somePtr &&
-                                        (long) somePtr <
-                                        ((long) memoryBasicInformation.BaseAddress + (long) memoryBasicInformation.RegionSize);
+                VirtualQuery(offset, ref memoryBasicInformation, (IntPtr) Marshal.SizeOf(memoryBasicInformation));
 
-                    if (isManagedHeap || !heaponly)
-                    {
-                        Console.WriteLine(
-                            "{7} base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
-                            (int) memoryBasicInformation.BaseAddress,
-                            memoryBasicInformation.RegionSize,
-                            memoryBasicInformation.Type,
-                            (int) memoryBasicInformation.AllocationBase,
-                            memoryBasicInformation.State,
-                            memoryBasicInformation.Protect,
-                            memoryBasicInformation.AllocationProtect,
-                            isManagedHeap ? " ** " : "    ");
-                    }
-
-                    if (isManagedHeap)
-                    {
-                        heapsOffset = offset;
-                        lastHeapByte = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                    }
-
-                    offset = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                }
+                heapsOffset = (IntPtr)memoryBasicInformation.AllocationBase;
+                lastHeapByte = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
             }
         }
 
 
-        // ReSharper disable InconsistentNaming
+        // ReSharper disable All
 
         [DllImport(Kernel32, SetLastError = true)]
         unsafe internal static extern IntPtr VirtualQuery(
@@ -141,13 +107,13 @@ namespace _04_virtualMemory
         [StructLayout(LayoutKind.Sequential)]
         internal unsafe struct MEMORY_BASIC_INFORMATION
         {
-            internal void* BaseAddress;
-            internal void* AllocationBase;
-            internal uint AllocationProtect;
-            internal UIntPtr RegionSize;
-            internal uint State;
-            internal uint Protect;
-            internal uint Type;
+            public void* BaseAddress;
+            public void* AllocationBase;
+            public uint AllocationProtect;
+            public UIntPtr RegionSize;
+            public uint State;
+            public uint Protect;
+            public uint Type;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -168,6 +134,6 @@ namespace _04_virtualMemory
         [SecurityCritical]
         internal static extern void GetSystemInfo(ref SYSTEM_INFO lpSystemInfo);
     }
-    
-    // ReSharper restore InconsistentNaming
+
+    // ReSharper restore All
 }

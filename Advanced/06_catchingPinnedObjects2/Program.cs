@@ -10,9 +10,9 @@ namespace _07_catchingPinnedObjects2
 {
     internal class Program
     {
-        internal const String KERNEL32 = "kernel32.dll";
-        internal static IntPtr StringsTable;
-        internal static IntPtr MscorlibModule;
+        private const String KERNEL32 = "kernel32.dll";
+        private static IntPtr StringsTable;
+        private static IntPtr MscorlibModule;
 
         static unsafe Program()
         {
@@ -22,7 +22,6 @@ namespace _07_catchingPinnedObjects2
 
         private static unsafe void Main(string[] args)
         {
-            var offset = IntPtr.Zero;
             var objects = new Dictionary<Type, int>(7000);
 
             unsafe
@@ -31,7 +30,7 @@ namespace _07_catchingPinnedObjects2
                 IntPtr managedStart, managedEnd;
 
                 Console.ReadKey();
-                GetManagedHeap(offset, out managedStart, out managedEnd);
+                GetManagedHeap(out managedStart, out managedEnd);
 
                 // for gaps calculations
                 var lastRecognized = (long) managedStart;
@@ -41,7 +40,7 @@ namespace _07_catchingPinnedObjects2
                 var stopwatch = Stopwatch.StartNew();
                 for (IntPtr* ptr = (IntPtr*)managedStart, end = (IntPtr *)managedEnd; ptr < end; ptr++)
                 {
-                    if (IsCorrectMethodsTable(*(IntPtr*)ptr))
+                    if (IsCorrectMethodsTable(*ptr))
                     {
                         // checking next object.
                         int size;
@@ -126,30 +125,18 @@ namespace _07_catchingPinnedObjects2
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte)
+        private static void GetManagedHeap(out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
-            var somePtr = EntityPtr.ToPointer("sample");
+            var offset = EntityPtr.ToPointer(new object());
+
             var memoryBasicInformation = new MEMORY_BASIC_INFORMATION();
 
-            heapsOffset = IntPtr.Zero;
-            lastHeapByte = IntPtr.Zero;
             unsafe
             {
-                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr)Marshal.SizeOf(memoryBasicInformation)) !=
-                       IntPtr.Zero)
-                {
-                    var isManagedHeap = (long)memoryBasicInformation.BaseAddress < (long)somePtr &&
-                                        (long)somePtr <
-                                        ((long)memoryBasicInformation.BaseAddress + (long)memoryBasicInformation.RegionSize);
-                    
-                    if (isManagedHeap)
-                    {
-                        heapsOffset = offset;
-                        lastHeapByte = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
-                    }
+                VirtualQuery(offset, ref memoryBasicInformation, (IntPtr)Marshal.SizeOf(memoryBasicInformation));
 
-                    offset = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
-                }
+                heapsOffset = (IntPtr)memoryBasicInformation.AllocationBase;
+                lastHeapByte = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
             }
         }
 

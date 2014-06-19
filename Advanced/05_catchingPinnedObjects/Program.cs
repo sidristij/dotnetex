@@ -26,7 +26,6 @@ namespace _06_catchingPinnedObjects
 
         static unsafe void Main(string[] args)
         {
-            var offset = IntPtr.Zero;
             var gapsList = new List<Gap>(1000);
             var objects = new List<object>(1000);
             unsafe
@@ -36,7 +35,7 @@ namespace _06_catchingPinnedObjects
                 
                 // Get current heap ranges
                 IntPtr managedStart, managedEnd;
-                GetManagedHeap(offset, out managedStart, out managedEnd, true);
+                GetManagedHeap(out managedStart, out managedEnd);
                     
                 // calculating memory ranges
                 var types = MakeTypesMap();
@@ -101,7 +100,7 @@ namespace _06_catchingPinnedObjects
                             
                             if (GCEx.SizeOf(unsafeObject) != (lastObjPtr - backptr + 4))
                                 break;
-                            ;
+                            
                             if (unsafeObject.GetType().IsSecurityTransparent || objects.Contains(unsafeObject))
                                 break;
 
@@ -185,46 +184,21 @@ namespace _06_catchingPinnedObjects
         /// <summary>
         /// Gets managed heap address
         /// </summary>
-        private static unsafe void GetManagedHeap(IntPtr offset, out IntPtr heapsOffset, out IntPtr lastHeapByte, bool heaponly)
+        private static void GetManagedHeap(out IntPtr heapsOffset, out IntPtr lastHeapByte)
         {
-            var somePtr = EntityPtr.ToPointer("sample");
+            var offset = EntityPtr.ToPointer(new object());
+
             var memoryBasicInformation = new MEMORY_BASIC_INFORMATION();
 
-            heapsOffset = IntPtr.Zero;
-            lastHeapByte = IntPtr.Zero;
             unsafe
             {
-                while (VirtualQuery(offset, ref memoryBasicInformation, (IntPtr) Marshal.SizeOf(memoryBasicInformation)) !=
-                       IntPtr.Zero)
-                {
-                    var isManagedHeap = (long) memoryBasicInformation.BaseAddress < (long) somePtr &&
-                                        (long) somePtr <
-                                        ((long) memoryBasicInformation.BaseAddress + (long) memoryBasicInformation.RegionSize);
+                VirtualQuery(offset, ref memoryBasicInformation, (IntPtr)Marshal.SizeOf(memoryBasicInformation));
 
-                    if (isManagedHeap || !heaponly)
-                    {
-                        Console.WriteLine(
-                            "{7} base addr: 0x{0:X8} size: 0x{1:x8} type: {2:x8} alloc base: {3:x8} state: {4:x8} prot: {5:x2} alloc prot: {6:x8}",
-                            (int) memoryBasicInformation.BaseAddress,
-                            memoryBasicInformation.RegionSize,
-                            memoryBasicInformation.Type,
-                            (int) memoryBasicInformation.AllocationBase,
-                            memoryBasicInformation.State,
-                            memoryBasicInformation.Protect,
-                            memoryBasicInformation.AllocationProtect,
-                            isManagedHeap ? " ** " : "    ");
-                    }
-
-                    if (isManagedHeap)
-                    {
-                        heapsOffset = offset;
-                        lastHeapByte = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                    }
-
-                    offset = (IntPtr) ((long) offset + (long) memoryBasicInformation.RegionSize);
-                }
+                heapsOffset = (IntPtr)memoryBasicInformation.AllocationBase;
+                lastHeapByte = (IntPtr)((long)offset + (long)memoryBasicInformation.RegionSize);
             }
         }
+
 
 
         // ReSharper disable InconsistentNaming
