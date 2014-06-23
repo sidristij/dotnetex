@@ -36,6 +36,7 @@ Refl ctor call / ctor Redirection 43,22145 (higher is slower)   <--- 43 times fa
 ctor Redirection / newobj:        0,1861409 (higher is slower)  <--- 5 times faster than new T(int ..)
 Refl ctor call / newobj:          8,045278 (higher is slower)   <--- using reflection is just 8 times faster than new T(int ...);
 ```
+
 # Bugs
 
 Please feel free commiting new bugs to our issue tracker (github's tracker)
