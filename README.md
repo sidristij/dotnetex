@@ -39,4 +39,4 @@ Refl ctor call / newobj:          8,045278 (higher is slower)   <--- using refle
 
 # Bugs
 
-Please feel free commiting new bugs to our issue tracker (github's tracker)
+Please feel free to add new bugs to our issue tracker (github's tracker)
