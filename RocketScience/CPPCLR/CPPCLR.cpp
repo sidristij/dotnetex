@@ -11,7 +11,7 @@ using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Threading;
 
-namespace AdvancedThreading 
+namespace AdvancedThreading
 {
 
     static public ref class Fork

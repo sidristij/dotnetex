@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.CLR;
-
-namespace _03_ioc
+namespace IocSample
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Runtime.CLR;
+    
     public class Container : IDisposable
     {
         private AppDomainRunner appdomain;

@@ -1,9 +1,9 @@
-using System;
-using System.Reflection;
-using System.Runtime.CLR;
-
-namespace _03_ioc
+namespace IocSample
 {
+    using System;
+    using System.Reflection;
+    using System.Runtime.CLR;
+    
     public class AppDomainRunner : MarshalByRefObject, IDisposable
     {
         private AppDomain appDomain;
@@ -13,11 +13,6 @@ namespace _03_ioc
         private void LoadAssembly(string assemblyPath)
         {
             assembly = Assembly.LoadFile(assemblyPath);
-        }
-        
-        public AppDomainRunner()
-        {
-            ;
         }
 
         public AppDomainRunner(string assemblyPath)

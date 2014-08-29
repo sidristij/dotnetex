@@ -1,8 +1,8 @@
-﻿using System;
-using System.Diagnostics;
-
-namespace _02_exceptionsHandling
+﻿namespace ExceptionsHandlingSample
 {
+    using System;
+    using System.Diagnostics;
+    
     class Program
     {
         static void Main(string[] args)

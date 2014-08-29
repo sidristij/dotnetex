@@ -15,6 +15,7 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>CPPCLR</RootNamespace>
+    <ProjectName>AdvancedThreadingNative</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -93,7 +94,6 @@
     <ClCompile Include="RegHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\01_forkingthread\program.cs" />
     <None Include="app.ico" />
   </ItemGroup>
   <ItemGroup>

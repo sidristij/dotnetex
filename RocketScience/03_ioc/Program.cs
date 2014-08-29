@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace _03_ioc
+namespace IocSample
 {
     class Program
     {

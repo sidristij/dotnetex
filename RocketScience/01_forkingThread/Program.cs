@@ -1,13 +1,13 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading;
-using AdvancedThreading;
-
-namespace ForkingThreadSample
+﻿namespace AdvancedThreadingSample
 {
+    using System;
+    using System.Diagnostics;
+    using System.Threading;
+    using AdvancedThreading;
+    
     public static class Program
     {
-        static readonly object _sync = new object();
+        static readonly object Sync = new object();
 
         static void Main(string[] args)
         {
@@ -33,7 +33,7 @@ namespace ForkingThreadSample
             // Splitting current thread flow to two threads
             var forked = Fork.CloneThread(inThreadpool);
 
-            lock (_sync)
+            lock (Sync)
             {
                 Console.WriteLine("in {0} thread: {1}, local value: {2}, time to enter = {3} ms",
                     forked ? "forked" : "parent",
