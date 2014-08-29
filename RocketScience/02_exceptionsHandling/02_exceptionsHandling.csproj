@@ -8,7 +8,7 @@
     <ProjectGuid>{0208D865-800F-4C3D-A25F-146E3E50BC2A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_02_exceptionsHandling</RootNamespace>
+    <RootNamespace>ExceptionsHandlingSample</RootNamespace>
     <AssemblyName>02_exceptionsHandling</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
