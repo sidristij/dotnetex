@@ -9,7 +9,7 @@
     {
         static readonly object Sync = new object();
 
-        static void Main(string[] args)
+        static void Main()
         {
             Console.WriteLine("Press [Enter] to start");
             Console.ReadKey();

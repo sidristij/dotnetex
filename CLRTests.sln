@@ -213,6 +213,7 @@ Global
 		{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}.Release|Win32.ActiveCfg = Release|Win32
 		{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}.Release|Win32.Build.0 = Release|Win32
 		{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}.Release|x86.ActiveCfg = Release|Win32
+		{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}.Release|x86.Build.0 = Release|Win32
 		{0208D865-800F-4C3D-A25F-146E3E50BC2A}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{0208D865-800F-4C3D-A25F-146E3E50BC2A}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{0208D865-800F-4C3D-A25F-146E3E50BC2A}.Debug|Mixed Platforms.Build.0 = Debug|x86
