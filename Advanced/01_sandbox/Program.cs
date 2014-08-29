@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace sandbox
+﻿namespace SafePtrSample
 {
+    using System;
+
     class Program
     {
         static void Main(string[] args)

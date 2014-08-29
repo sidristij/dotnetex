@@ -1,16 +1,22 @@
-﻿using System;
-using System.Runtime.InteropServices;
-
-namespace sandbox
+﻿namespace SafePtrSample
 {
+    using System;
+    using System.Runtime.InteropServices;
+
     [StructLayout(LayoutKind.Explicit)]
     public struct SafePtr
     {
+        /// <summary>
+        /// Type for reference taking
+        /// </summary>
         public class ReferenceType
         {
             public object Reference;
         }
         
+        /// <summary>
+        /// Type for address taking
+        /// </summary>
         public class IntPtrWrapper
         {
             public IntPtr IntPtr;
@@ -22,6 +28,11 @@ namespace sandbox
         [FieldOffset(0)]
         private IntPtrWrapper Pointer;
 
+        /// <summary>
+        /// Creates object addressable by wrapping it
+        /// </summary>
+        /// <param name="obj">object reference to get its address</param>
+        /// <returns></returns>
         public static SafePtr Create(object obj)
         {
             return new SafePtr { Obj = new ReferenceType { Reference = obj } };

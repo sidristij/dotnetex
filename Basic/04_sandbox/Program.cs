@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CLR;
-using System.Security;
-using System.Security.Permissions;
-
-namespace _04_sandbox
+﻿namespace SandboxingAppDomainSample
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.CLR;
+    using System.Security;
+    using System.Security.Permissions;
+    
     public class AppDomainRunner : MarshalByRefObject
     {
         private void methodInsideAppDomain(IntPtr startingIntPtr)

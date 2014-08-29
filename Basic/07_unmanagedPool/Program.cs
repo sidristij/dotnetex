@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Runtime.CLR;
 
-namespace _07_unmanagedPool
+namespace UnmanagedPoolSample
 {
     class Program
     {
         /// <summary>
         /// Now cannot call default .ctor
         /// </summary>
-        public class Quote : UnmanagedObject<Quote>
+        private class Quote : UnmanagedObject<Quote>
         {
             public Quote(int urr)
             {

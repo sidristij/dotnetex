@@ -119,7 +119,7 @@ namespace System.Runtime.CLR
 		
 		public void Reset()
 		{
-            UnmanagedPoolWinApiHelper.memcpy((IntPtr)_freeObjects, (IntPtr)_allObjects, _capacity * IntPtr.Size);
+            WinApi.memcpy((IntPtr)_freeObjects, (IntPtr)_allObjects, _capacity * IntPtr.Size);
 			_freeSize = _capacity;
 		}
 
@@ -137,11 +137,5 @@ namespace System.Runtime.CLR
         {
             Marshal.FreeHGlobal((IntPtr)_freeObjects);
         }
-    }
-
-    internal static class UnmanagedPoolWinApiHelper
-    {
-        [DllImport("msvcrt.dll", SetLastError = false)]
-        public static extern IntPtr memcpy(IntPtr dest, IntPtr src, int count);
     }
 }

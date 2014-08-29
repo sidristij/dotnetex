@@ -1,15 +1,14 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.CLR;
-
-namespace _01_allocOnStack
+﻿namespace AllocOnStackSample
 {
+    using System;
+    using System.Runtime.CLR;
+
     class Program
     {
         /// <summary>
         /// Simple class with overrided method
         /// </summary>
-        public class Customer
+        private class Customer
         {
             public int x;
             public int y;

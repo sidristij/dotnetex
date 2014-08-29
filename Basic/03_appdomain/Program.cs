@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CLR;
-
-namespace _03_appdomain
+﻿namespace AppDomainsSample
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.CLR;
+
     public class AppDomainRunner : MarshalByRefObject
     {
         private void methodInsideAppDomain(IntPtr startingIntPtr)

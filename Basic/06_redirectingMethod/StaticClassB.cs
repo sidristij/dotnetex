@@ -1,6 +1,6 @@
 using System;
 
-namespace _06_redirectingMethod
+namespace RedirectingMethodBodySample
 {
     public static class StaticClassB
     {

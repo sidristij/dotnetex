@@ -1,13 +1,13 @@
-﻿using System;
-using System.Reflection;
-using System.Runtime.CLR;
-using System.Runtime.CompilerServices;
-
-namespace _06_redirectingMethod
+﻿namespace RedirectingMethodBodySample
 {
+    using System;
+    using System.Reflection;
+    using System.Runtime.CLR;
+    using System.Runtime.CompilerServices;
+    
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             // Run static method replace
             StaticTests();

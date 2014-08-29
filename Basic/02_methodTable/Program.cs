@@ -1,8 +1,8 @@
-﻿using System;
-using System.Runtime.CLR;
-
-namespace _02_sizeof
+﻿namespace SizeofSample
 {
+    using System;
+    using System.Runtime.CLR;
+
     class Program
     {
         static void Main()

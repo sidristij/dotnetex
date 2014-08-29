@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CLR;
-using System.Threading;
-
-namespace _05_getFutureObjects
+﻿namespace TakingFutureObjectsSample
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.CLR;
+    using System.Threading;
+    
     public class AppDomainRunner : MarshalByRefObject
     {
         private void methodInsideAppDomain()
@@ -22,7 +22,7 @@ namespace _05_getFutureObjects
                     List<int> catched = null;
                     foreach (var obj in GCEx.GetObjectsInSOH(startObj, mt => mt != 0))
                     {
-                        Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj.Item, obj.Item.GetType().Name, GCEx.SizeOf(obj.Item));
+                        Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj.Item, obj.Item.GetType().Name, obj.Item.SizeOf());
                         if (obj.Item is List<int>) catched = (List<int>)obj.Item;
                     }
 
@@ -53,7 +53,7 @@ namespace _05_getFutureObjects
 
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Console.ReadKey();
             AppDomainRunner.Go();
