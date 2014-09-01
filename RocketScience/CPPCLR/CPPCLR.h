@@ -10,5 +10,5 @@ public class AdvancedThreading_Unmanaged
 {	
 public:
 	int ForkImpl();
-	void InForkedThread();
+	void InForkedThread(StackInfo * stackCopy);
 };

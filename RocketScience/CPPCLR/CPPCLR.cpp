@@ -42,27 +42,27 @@ namespace AdvancedThreading
 
     internal:
 
-        static void MakeThread()
+        static void MakeThread(StackInfo *stackCopy)
         {
             if(scheduleInThreadPool)
             {
-                ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThreadPool));
+                ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThreadPool), gcnew IntPtr(stackCopy));
             }
             else
             {
-                Thread^ thread = gcnew Thread(gcnew ThreadStart(&InForkedThread));
-                thread->Start();
+                Thread^ thread = gcnew Thread(gcnew ParameterizedThreadStart(&InForkedThread));
+                thread->Start(gcnew IntPtr(stackCopy));
             }
         }
          
         static void InForkedThreadPool(Object^ state)
         {
-            helper->InForkedThread();
+			helper->InForkedThread(reinterpret_cast<StackInfo *>(((IntPtr ^)state)->ToPointer()));
         }
          
-        static void InForkedThread()
+        static void InForkedThread(Object^ state)
         {
-            helper->InForkedThread();
+			helper->InForkedThread(reinterpret_cast<StackInfo *>(((IntPtr ^)state)->ToPointer()));
         }
     };
 }
@@ -71,9 +71,9 @@ namespace AdvancedThreading
 //  Special wapper to enable managed method call from unmanaged method
 //
 extern "C" __declspec(dllexport)
-void __stdcall MakeManagedThread() 
+void __stdcall MakeManagedThread(StackInfo *stackCopy) 
 {
-    AdvancedThreading::Fork::MakeThread();
+    AdvancedThreading::Fork::MakeThread(stackCopy);
 }
 
 

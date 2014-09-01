@@ -4,7 +4,7 @@
 #include "CPPCLR.h"
 
 extern "C" __declspec(dllexport)
-void __stdcall MakeManagedThread();
+	void __stdcall MakeManagedThread(StackInfo * info);
 
 public class StackInfo
 {
@@ -20,16 +20,13 @@ public:
     int origStackStart, origStackSize;
 };
 
-volatile static StackInfo* stackInfo;
-
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
     int ESPr, EBPr, EIPr;                 // 3 words
     int EAXr, EBXr, ECXr, EDXr;
     int EDIr, ESIr;
     short CSr;
-    StackInfo* info;                      // 1 word
-    int isforked;
+    StackInfo* info;  
 
     // Save ALL registers
     _asm 
@@ -51,11 +48,11 @@ int AdvancedThreading_Unmanaged::ForkImpl()
         push 0
     }
 Label0:
-    __asm pop isforked
+    __asm pop info
         
-    if(isforked)
+    if(info != 0)
     {
-        EBPr = stackInfo->EBP;
+        EBPr = info->EBP;
         __asm mov EBP, EBPr
         __asm mov ESP, EBP
         return 1;
@@ -66,7 +63,7 @@ Label0:
     //  We need to copy stack part from our method to user code method including its locals in stack
     //
     int localsStart = EBPr;                                // our EBP points to EBP value for parent method
-    int localsEnd = *(int *)*(int *)*(int *)*(int *)EBPr;  // points to end of user's method's locals
+    int localsEnd = *(int *)*(int *)*(int *)*(int *)EBPr;  // points to end of user's method's locals /* TODO: not always correct */
 
     byte *arr = new byte[localsEnd - localsStart];
     memcpy(arr, (void*)localsStart, localsEnd - localsStart);
@@ -95,10 +92,9 @@ Label0:
 
     info->frame = arr;
     info->size = (localsEnd - localsStart);
-    stackInfo = info;
 
     // call managed new Thread().Start() to make fork
-    MakeManagedThread(); 
+    MakeManagedThread(info); 
 
     return 0;
 }
@@ -108,7 +104,7 @@ Label0:
  *  InForkedThread uses variable parameters count feature to 
  *
  */
-void AdvancedThreading_Unmanaged::InForkedThread()
+void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
 {
     int EBPr, ESPr;   			          
     int EAXr, EBXr, ECXr, EDXr;
@@ -116,37 +112,37 @@ void AdvancedThreading_Unmanaged::InForkedThread()
     short CS_EIP[3];
     
 
-    void * frame = stackInfo->frame;
-    int size = stackInfo->size;
+    void * frame = stackCopy->frame;
+    int size = stackCopy->size;
 
     // Setup FWORD for far jmp
-    *(int*)CS_EIP = stackInfo->EIP;
-    CS_EIP[2] = stackInfo->CS;
+    *(int*)CS_EIP = stackCopy->EIP;
+    CS_EIP[2] = stackCopy->CS;
 
     // localize registers values
-    EAXr = stackInfo->EAX;
-    EBXr = stackInfo->EBX;
-    ECXr = stackInfo->ECX;
-    EDXr = stackInfo->EDX;
-    EDIr = stackInfo->EDI;
-    ESIr = stackInfo->ESI;
+    EAXr = stackCopy->EAX;
+    EBXr = stackCopy->EBX;
+    ECXr = stackCopy->ECX;
+    EDXr = stackCopy->EDX;
+    EDIr = stackCopy->EDI;
+    ESIr = stackCopy->ESI;
     
     // calculate ranges
-    int beg = (int)stackInfo->frame;
-    int end = beg + stackInfo->size;
-    int baseFrom = (int) stackInfo->origStackStart;
-    int baseTo = baseFrom + (int)stackInfo->origStackSize;
+    int beg = (int)stackCopy->frame;
+    int end = beg + stackCopy->size;
+    int baseFrom = (int) stackCopy->origStackStart;
+    int baseTo = baseFrom + (int)stackCopy->origStackSize;
     
     __asm mov ESPr, ESP
 
     // target = EBP[ - locals - EBP - ret - whole stack frames copy]
-    int targetToCopy = ESPr - 8 - stackInfo->size;
+    int targetToCopy = ESPr - 8 - stackCopy->size;
 
     // offset between parent stack and current stack;
-    int delta_to_target = (int)targetToCopy - (int)stackInfo->EBP;
+    int delta_to_target = (int)targetToCopy - (int)stackCopy->EBP;
 
     // offset between parent stack start and its copy;
-    int delta_to_copy = (int)stackInfo->frame - (int)stackInfo->EBP;
+    int delta_to_copy = (int)stackCopy->frame - (int)stackCopy->EBP;
 
     // In stack copy we have many saved EPBs, which where actually one-way linked list.
     // we need to fix copy to make these pointers correct for our thread's stack.
@@ -176,7 +172,7 @@ void AdvancedThreading_Unmanaged::InForkedThread()
         __asm push val;
     };
     
-    stackInfo->EBP = targetToCopy;
+    stackCopy->EBP = targetToCopy;
 
     // restore registers, push 1 for Fork() and jmp
     _asm {        
@@ -191,7 +187,7 @@ void AdvancedThreading_Unmanaged::InForkedThread()
         pop ECX
         pop EBX
                 
-        push 1
+        push stackCopy
         jmp fword ptr CS_EIP
     }
 
