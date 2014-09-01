@@ -71,21 +71,8 @@ Label0:
 
     // fill StackInfo structure
     info = new StackInfo(copy);
-    info->ESP = copy.ESP;
-    info->EBP = copy.EBP;
-    info->EIP = copy.EIP;
-    info->CS = copy.CS;
-
-    info->EAX = copy.EAX;
-    info->EBX = copy.EBX;
-    info->ECX = copy.ECX;
-    info->EDX = copy.EDX;
-    info->EDI = copy.EDI;
-    info->ESI = copy.ESI;
-    
     info->origStackStart = (int)stackData->BaseAddress;
     info->origStackSize = (int)stackData->RegionSize;
-
     info->frame = arr;
     info->size = (localsEnd - localsStart);
 
