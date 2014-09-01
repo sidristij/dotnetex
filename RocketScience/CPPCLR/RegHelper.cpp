@@ -4,24 +4,12 @@
 #include "CPPCLR.h"
 
 extern "C" __declspec(dllexport)
-	void __stdcall MakeManagedThread(StackInfo * info);
+	void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo * info);
 
-public class StackInfo
-{
-public:
-    int EAX, EBX, ECX, EDX;
-    int EDI, ESI;
-    int ESP;
-    int EBP;
-    int EIP;
-    short CS;
-    void *frame;
-    int size;
-    int origStackStart, origStackSize;
-};
 
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
+	int threadpool = 0;
 	StackInfo copy;
     StackInfo* info;  
 
@@ -77,7 +65,7 @@ Label0:
     info->size = (localsEnd - localsStart);
 
     // call managed new Thread().Start() to make fork
-    MakeManagedThread(info); 
+    MakeManagedThread(this, info); 
 
     return 0;
 }

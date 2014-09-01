@@ -5,6 +5,10 @@
     using System.Threading;
     using AdvancedThreading;
     
+    /// <summary>
+    /// This sample shows how to clone existing thread flow to another.
+    /// Note: Method, which calls Clone() should not contain ref/out parameters, because they makes stack references in stack, which shouldn't be fixed. 
+    /// </summary>
     public static class Program
     {
         static readonly object Sync = new object();
@@ -14,24 +18,21 @@
             Console.WriteLine("Press [Enter] to start");
             Console.ReadKey();
 
-            Console.WriteLine("Splitting to new thread:");
-            MakeFork(false);
-
             Console.WriteLine("Splitting to thread pool:");
-            MakeFork(true);
-            
+            MakeFork();
+
             Console.WriteLine("Fork called successfully");
             Console.ReadKey();
         }
 
-        static void MakeFork(bool inThreadpool)
+        static void MakeFork()
         {
             var cdevent = new CountdownEvent(2);
             var sameLocalVariable = 123;
             var stopwatch = Stopwatch.StartNew();
 
             // Splitting current thread flow to two threads
-            var forked = Fork.CloneThread(inThreadpool);
+            var forked = Fork.CloneThread();
 
             lock (Sync)
             {
