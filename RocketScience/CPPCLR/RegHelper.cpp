@@ -22,29 +22,26 @@ public:
 
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
-    int ESPr, EBPr, EIPr;                 // 3 words
-    int EAXr, EBXr, ECXr, EDXr;
-    int EDIr, ESIr;
-    short CSr;
+	StackInfo copy;
     StackInfo* info;  
 
     // Save ALL registers
     _asm 
     {
-        mov EAXr, EAX
-        mov EBXr, EBX
-        mov ECXr, ECX
-        mov EDXr, EBX
-        mov EDIr, EDI
-        mov ESIr, ESI
-        mov EBPr, EBP
-        mov ESPr, ESP
+        mov copy.EAX, EAX
+        mov copy.EBX, EBX
+        mov copy.ECX, ECX
+        mov copy.EDX, EBX
+        mov copy.EDI, EDI
+        mov copy.ESI, ESI
+        mov copy.EBP, EBP
+        mov copy.ESP, ESP
         
-    // Save CS:EIP for far jmp
-        mov CSr, CS
-        mov EIPr, offset Label0
+		// Save CS:EIP for far jmp
+        mov copy.CS, CS
+        mov copy.EIP, offset Label0
 
-    // Save mark for this method, from what place it was called
+		// Save mark for this method, from what place it was called
         push 0
     }
 Label0:
@@ -52,18 +49,17 @@ Label0:
         
     if(info != 0)
     {
-        EBPr = info->EBP;
-        __asm mov EBP, EBPr
+        copy.EBP = info->EBP;
+        __asm mov EBP, copy.EBP
         __asm mov ESP, EBP
         return 1;
     }
 
-
     //
     //  We need to copy stack part from our method to user code method including its locals in stack
     //
-    int localsStart = EBPr;                                // our EBP points to EBP value for parent method
-    int localsEnd = *(int *)*(int *)*(int *)*(int *)EBPr;  // points to end of user's method's locals /* TODO: not always correct */
+    int localsStart = copy.EBP;                                // our EBP points to EBP value for parent method
+    int localsEnd = *(int *)*(int *)*(int *)*(int *)copy.EBP;  // points to end of user's method's locals /* TODO: not always correct */
 
     byte *arr = new byte[localsEnd - localsStart];
     memcpy(arr, (void*)localsStart, localsEnd - localsStart);
@@ -71,21 +67,21 @@ Label0:
     
     // Get information about stack pages
     MEMORY_BASIC_INFORMATION *stackData = new MEMORY_BASIC_INFORMATION();            
-    VirtualQuery((void *)EBPr, stackData, sizeof(MEMORY_BASIC_INFORMATION));
+    VirtualQuery((void *)copy.EBP, stackData, sizeof(MEMORY_BASIC_INFORMATION));
 
     // fill StackInfo structure
-    info = new StackInfo();
-    info->ESP = ESPr;
-    info->EBP = EBPr;
-    info->EIP = EIPr;
-    info->CS = CSr;
+    info = new StackInfo(copy);
+    info->ESP = copy.ESP;
+    info->EBP = copy.EBP;
+    info->EIP = copy.EIP;
+    info->CS = copy.CS;
 
-    info->EAX = EAXr;
-    info->EBX = EBXr;
-    info->ECX = ECXr;
-    info->EDX = EDXr;
-    info->EDI = EDIr;
-    info->ESI = ESIr;
+    info->EAX = copy.EAX;
+    info->EBX = copy.EBX;
+    info->ECX = copy.ECX;
+    info->EDX = copy.EDX;
+    info->EDI = copy.EDI;
+    info->ESI = copy.ESI;
     
     info->origStackStart = (int)stackData->BaseAddress;
     info->origStackSize = (int)stackData->RegionSize;
@@ -106,43 +102,34 @@ Label0:
  */
 void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
 {
-    int EBPr, ESPr;   			          
-    int EAXr, EBXr, ECXr, EDXr;
-    int EDIr, ESIr;
+    StackInfo copy;
     short CS_EIP[3];
     
-
-    void * frame = stackCopy->frame;
-    int size = stackCopy->size;
+    // safe copy w-out changing registers
+	for(int i=0; i<sizeof(StackInfo);i++)
+		((byte *)&copy)[i] = ((byte *)stackCopy)[i];
 
     // Setup FWORD for far jmp
-    *(int*)CS_EIP = stackCopy->EIP;
-    CS_EIP[2] = stackCopy->CS;
+    *(int*)CS_EIP = copy.EIP;
+    CS_EIP[2] = copy.CS;
 
-    // localize registers values
-    EAXr = stackCopy->EAX;
-    EBXr = stackCopy->EBX;
-    ECXr = stackCopy->ECX;
-    EDXr = stackCopy->EDX;
-    EDIr = stackCopy->EDI;
-    ESIr = stackCopy->ESI;
+	// calculate ranges
+    int beg = (int)copy.frame;
+    int size = copy.size;    
+	int end = beg + size;
+    int baseFrom = (int) copy.origStackStart;
+    int baseTo = baseFrom + (int)copy.origStackSize;
     
-    // calculate ranges
-    int beg = (int)stackCopy->frame;
-    int end = beg + stackCopy->size;
-    int baseFrom = (int) stackCopy->origStackStart;
-    int baseTo = baseFrom + (int)stackCopy->origStackSize;
-    
-    __asm mov ESPr, ESP
+    __asm mov copy.ESP, ESP
 
     // target = EBP[ - locals - EBP - ret - whole stack frames copy]
-    int targetToCopy = ESPr - 8 - stackCopy->size;
+    int targetToCopy = copy.ESP - 8 - size;
 
     // offset between parent stack and current stack;
-    int delta_to_target = (int)targetToCopy - (int)stackCopy->EBP;
+    int delta_to_target = (int)targetToCopy - (int)copy.EBP;
 
     // offset between parent stack start and its copy;
-    int delta_to_copy = (int)stackCopy->frame - (int)stackCopy->EBP;
+    int delta_to_copy = (int)copy.frame - (int)copy.EBP;
 
     // In stack copy we have many saved EPBs, which where actually one-way linked list.
     // we need to fix copy to make these pointers correct for our thread's stack.
@@ -176,11 +163,11 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
 
     // restore registers, push 1 for Fork() and jmp
     _asm {        
-        push EBXr
-        push ECXr
-        push EDXr
-        push ESIr
-        push EDIr
+        push copy.EBX
+        push copy.ECX
+        push copy.EDX
+        push copy.ESI
+        push copy.EDI
         pop EDI
         pop ESI
         pop EDX
