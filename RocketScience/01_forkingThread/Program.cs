@@ -12,6 +12,7 @@
     public static class Program
     {
         static readonly object Sync = new object();
+        static readonly CountdownEvent joined = new CountdownEvent(2);
 
         static void Main()
         {
@@ -19,7 +20,9 @@
             Console.ReadKey();
 
             Console.WriteLine("Splitting to thread pool:");
+            
             MakeFork();
+            joined.Wait();
 
             Console.WriteLine("Fork called successfully");
             Console.ReadKey();
@@ -45,6 +48,7 @@
             }
 
             // Here forked thread's life will be stopped
+            joined.Signal();
         }
     }
 }
