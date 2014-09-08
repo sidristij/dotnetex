@@ -7,6 +7,22 @@ extern "C" __declspec(dllexport)
 	void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo * info);
 
 
+#define CHECKREF(REG) if((info->REG >= stackStart) && (info->REG <= stackEnd)) info->REG += delta;
+
+void AdvancedThreading_Unmanaged::FixReferences(StackInfo *info, int delta)
+{
+	int stackStart = info->origStackStart;
+	int stackEnd = stackStart + info->origStackSize;
+	
+	CHECKREF(EAX);
+	CHECKREF(EBX);
+	CHECKREF(ECX);
+	CHECKREF(EDX);
+
+	CHECKREF(ESI);
+	CHECKREF(EDI);
+}
+
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
 	int threadpool = 0;
@@ -135,6 +151,9 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     };
     
     stackCopy->EBP = targetToCopy;
+
+	// Fix stack pointers in registers (TODO: may change cached integers, which values are in stack address space range)
+	FixReferences(stackCopy, delta_to_target);
 
     // restore registers, push 1 for Fork() and jmp
     _asm {        

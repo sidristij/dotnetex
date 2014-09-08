@@ -20,9 +20,13 @@
             Console.ReadKey();
 
             Console.WriteLine("Splitting to thread pool:");
-            
-            MakeFork();
-            joined.Wait();
+
+            for (int i = 0; i < 300; i++)
+            {
+                joined.Reset(2);
+                MakeFork();
+                joined.Wait();
+            }
 
             Console.WriteLine("Fork called successfully");
             Console.ReadKey();
