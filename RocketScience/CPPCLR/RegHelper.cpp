@@ -4,29 +4,30 @@
 #include "CPPCLR.h"
 
 extern "C" __declspec(dllexport)
-	void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo * info);
+    void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo * info);
 
 
 #define CHECKREF(REG) if((info->REG >= stackStart) && (info->REG <= stackEnd)) info->REG += delta;
 
 void AdvancedThreading_Unmanaged::FixReferences(StackInfo *info, int delta)
 {
-	int stackStart = info->origStackStart;
-	int stackEnd = stackStart + info->origStackSize;
-	
-	CHECKREF(EAX);
-	CHECKREF(EBX);
-	CHECKREF(ECX);
-	CHECKREF(EDX);
+    int stackStart = info->origStackStart;
+    int stackEnd = stackStart + info->origStackSize;
+    
+    // We need to investigate, what registers are used in what cases for all .Net versions and fix only registers we need.
+    CHECKREF(EAX);
+    CHECKREF(EBX);
+    CHECKREF(ECX);
+    CHECKREF(EDX);
 
-	CHECKREF(ESI);
-	CHECKREF(EDI);
+    CHECKREF(ESI);
+    CHECKREF(EDI);
 }
 
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
-	int threadpool = 0;
-	StackInfo copy;
+    int threadpool = 0;
+    StackInfo copy;
     StackInfo* info;  
 
     // Save ALL registers
@@ -41,11 +42,11 @@ int AdvancedThreading_Unmanaged::ForkImpl()
         mov copy.EBP, EBP
         mov copy.ESP, ESP
         
-		// Save CS:EIP for far jmp
+        // Save CS:EIP for far jmp
         mov copy.CS, CS
         mov copy.EIP, offset Label0
 
-		// Save mark for this method, from what place it was called
+        // Save mark for this method, from what place it was called
         push 0
     }
 Label0:
@@ -54,9 +55,17 @@ Label0:
     if(info != 0)
     {
         copy.EBP = info->EBP;
-        __asm mov EBP, copy.EBP
-        __asm mov ESP, EBP
-        return 1;
+        __asm
+		{
+			mov EBP, copy.EBP
+            mov ESP, EBP
+
+			// return 1 emulation
+			pop EBP
+			mov EAX, 1
+			ret
+		}
+        return 1;  // can be changed to jmp by compiler
     }
 
     //
@@ -95,19 +104,31 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
 {
     StackInfo copy;
     short CS_EIP[3];
-    
+
+	// Save original registers to restore
+	_asm  
+	{
+		push EAX
+		push EBX
+		push ECX
+		push EDX
+
+		push ESI
+		push EDI
+	}
+
     // safe copy w-out changing registers
-	for(int i=0; i<sizeof(StackInfo);i++)
-		((byte *)&copy)[i] = ((byte *)stackCopy)[i];
+    for(int i = 0; i < sizeof(StackInfo); i++)
+        ((byte *)&copy)[i] = ((byte *)stackCopy)[i];
 
     // Setup FWORD for far jmp
     *(int*)CS_EIP = copy.EIP;
     CS_EIP[2] = copy.CS;
 
-	// calculate ranges
+    // calculate ranges
     int beg = (int)copy.frame;
     int size = copy.size;    
-	int end = beg + size;
+    int end = beg + size;
     int baseFrom = (int) copy.origStackStart;
     int baseTo = baseFrom + (int)copy.origStackSize;
     
@@ -138,7 +159,7 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
         else 
             break;
     }
-
+    
     // for ret
     
     __asm push offset Label0
@@ -152,11 +173,12 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     
     stackCopy->EBP = targetToCopy;
 
-	// Fix stack pointers in registers (TODO: may change cached integers, which values are in stack address space range)
-	FixReferences(stackCopy, delta_to_target);
+    // Fix stack pointers in registers (TODO: may change cached integers, which values are in stack address space range)
+    FixReferences(stackCopy, delta_to_target);
 
     // restore registers, push 1 for Fork() and jmp
     _asm {        
+		push copy.EAX
         push copy.EBX
         push copy.ECX
         push copy.EDX
@@ -167,12 +189,25 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
         pop EDX
         pop ECX
         pop EBX
+		pop EAX
                 
         push stackCopy
         jmp fword ptr CS_EIP
     }
 
 Label0:
+    
+	// Restore original registers
+	_asm  
+	{
+		pop EDI
+		pop ESI
+
+		pop EDX
+		pop ECX
+		pop EBX
+		pop EAX
+	}
 
     return;
  }

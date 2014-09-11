@@ -18,7 +18,7 @@ namespace AdvancedThreading
 
     public:
         
-        [MethodImpl(MethodImplOptions::NoInlining)]
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
         static bool CloneThread()
         {
             ManualResetEvent^ resetEvent = gcnew ManualResetEvent(false);
@@ -44,6 +44,7 @@ namespace AdvancedThreading
 			StackInfo *info;
 		};
 
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
         static void MakeThread(AdvancedThreading_Unmanaged *helper, StackInfo *stackCopy)
         {
 			ForkData^ data = gcnew ForkData();
@@ -53,7 +54,8 @@ namespace AdvancedThreading
             ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThread), data);            
         }
          
-        static void InForkedThread(Object^ state)
+		[MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
+		static void InForkedThread(Object^ state)
         {
 			ForkData^ data = (ForkData^) state;
 			data->helper->InForkedThread(data->info);
