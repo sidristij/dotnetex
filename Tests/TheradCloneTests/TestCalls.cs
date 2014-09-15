@@ -1,7 +1,6 @@
 ﻿namespace TheradCloneTests
 {
     using System;
-    using System.Data;
     using System.Threading;
     using AdvancedThreading;
     using NUnit.Framework;

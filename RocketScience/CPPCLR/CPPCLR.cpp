@@ -23,7 +23,10 @@ namespace AdvancedThreading
         {
             ManualResetEvent^ resetEvent = gcnew ManualResetEvent(false);
             AdvancedThreading_Unmanaged *helper = new AdvancedThreading_Unmanaged();
+            int somevalue;
 
+            // additionally we pass current stack top address to calculate # of frames to save
+            helper->stacktop = (int)(int *)&somevalue;
             bool forked = helper->ForkImpl();
             if(!forked)
             {
@@ -60,6 +63,10 @@ namespace AdvancedThreading
 			ForkData^ data = (ForkData^) state;
 			data->helper->InForkedThread(data->info);
         }
+
+    private:
+
+        static int calldeep;
     };
 }
 

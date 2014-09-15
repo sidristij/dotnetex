@@ -22,9 +22,7 @@ public:
 public class AdvancedThreading_Unmanaged
 {	
 public:
+    int stacktop;
 	int ForkImpl();
 	void InForkedThread(StackInfo * stackCopy);
-
-private:
-	void FixReferences(StackInfo *info, int delta);
 };

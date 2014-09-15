@@ -9,10 +9,6 @@ extern "C" __declspec(dllexport)
 
 #define CHECKREF(REG) if((stackCopy->REG >= baseFrom) && (stackCopy->REG <= baseTo)) stackCopy->REG += delta_to_target;
 
-void AdvancedThreading_Unmanaged::FixReferences(StackInfo *info, int delta)
-{
-}
-
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
     int threadpool = 0;
@@ -47,7 +43,6 @@ Label0:
         __asm
         {
             mov ESP, copy.ESP
-            mov EBP, ESP
 
             // return 1 emulation
             pop EBP
@@ -57,11 +52,28 @@ Label0:
         return 1;  // can be changed to jmp by compiler
     }
 
+    int *curptr = (int *)copy.EBP;
+    int frames = 0;
+
+    while(curptr != 0 && (int)curptr <= stacktop)
+    {
+        curptr = (int*)*curptr;
+        frames++;
+    }
+
+    frames++; // to go outside library to caller
+
     //
     //  We need to copy stack part from our method to user code method including its locals in stack
     //
-    int localsStart = copy.EBP;                                // our EBP points to EBP value for parent method
-    int localsEnd = *(int *)*(int *)*(int *)*(int *)copy.EBP;  // points to end of user's method's locals /* TODO: not always correct */
+    int localsStart = copy.EBP;                         // our EBP points to EBP value for parent method
+    int localsEnd = copy.EBP;   // points to end of user's method's locals /* TODO: not always correct */
+
+    while(frames > 0)
+    {
+        localsEnd = *(int *)localsEnd;
+        frames--;
+    }
 
     byte *arr = new byte[localsEnd - localsStart];
     memcpy(arr, (void*)localsStart, localsEnd - localsStart);
@@ -168,9 +180,6 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     
     stackCopy->EBP = targetToCopy;
     stackCopy->ESP = targetToCopy;
-
-    // Fix stack pointers in registers (TODO: may change cached integers, which values are in stack address space range)
-    FixReferences(stackCopy, delta_to_target);
 
     // restore registers, push 1 for Fork() and jmp
     _asm {        
