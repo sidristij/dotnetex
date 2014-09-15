@@ -55,26 +55,21 @@ Label0:
     int *curptr = (int *)copy.EBP;
     int frames = 0;
 
-    while(curptr != 0 && (int)curptr <= stacktop)
+    //
+    //  Calculate frames count between current call and Fork.CloneTherad() call
+    //  
+    while ((int)curptr < stacktop)
     {
         curptr = (int*)*curptr;
         frames++;
     }
 
-    frames++; // to go outside library to caller
-
     //
     //  We need to copy stack part from our method to user code method including its locals in stack
     //
     int localsStart = copy.EBP;                         // our EBP points to EBP value for parent method
-    int localsEnd = copy.EBP;   // points to end of user's method's locals /* TODO: not always correct */
-
-    while(frames > 0)
-    {
-        localsEnd = *(int *)localsEnd;
-        frames--;
-    }
-
+    int localsEnd = *(int *)curptr;                     // points to end of user's method's locals (additional leave)
+    
     byte *arr = new byte[localsEnd - localsStart];
     memcpy(arr, (void*)localsStart, localsEnd - localsStart);
 
