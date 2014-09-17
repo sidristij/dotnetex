@@ -13,7 +13,7 @@ using namespace System::Threading;
 
 namespace AdvancedThreading
 {
-	static public ref class Fork
+    static public ref class Fork
     {
 
     public:
@@ -40,28 +40,28 @@ namespace AdvancedThreading
 
     internal:
 
-		ref class ForkData
-		{
-		public:
-			AdvancedThreading_Unmanaged *helper;
-			StackInfo *info;
-		};
+        ref class ForkData
+        {
+        public:
+            AdvancedThreading_Unmanaged *helper;
+            StackInfo *info;
+        };
 
         [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
         static void MakeThread(AdvancedThreading_Unmanaged *helper, StackInfo *stackCopy)
         {
-			ForkData^ data = gcnew ForkData();
-			data->helper = helper;
-			data->info = stackCopy;
+            ForkData^ data = gcnew ForkData();
+            data->helper = helper;
+            data->info = stackCopy;
 
             ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThread), data);            
         }
          
-		[MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
-		static void InForkedThread(Object^ state)
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
+        static void InForkedThread(Object^ state)
         {
-			ForkData^ data = (ForkData^) state;
-			data->helper->InForkedThread(data->info);
+            ForkData^ data = (ForkData^) state;
+            data->helper->InForkedThread(data->info);
         }
 
     private:

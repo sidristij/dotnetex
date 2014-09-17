@@ -21,14 +21,15 @@
 
             Console.WriteLine("Splitting to thread pool:");
 
-            for (int i = 0; i < 300; i++)
+            var i = 0;
+            for (; i < 200; i++)
             {
                 joined.Reset(2);
                 MakeFork();
                 joined.Wait();
             }
 
-            Console.WriteLine("Fork called successfully");
+            Console.WriteLine("Fork called successfully {0} times", i);
             Console.ReadKey();
         }
 

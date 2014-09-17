@@ -7,7 +7,7 @@ extern "C" __declspec(dllexport)
     void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo * info);
 
 
-#define CHECKREF(REG) if((stackCopy->REG >= baseFrom) && (stackCopy->REG <= baseTo)) stackCopy->REG += delta_to_target;
+#define CHECKREF(REG) if((copy.REG >= baseFrom) && (copy.REG <= baseTo)) copy.REG += delta_to_target;
 
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
@@ -29,21 +29,20 @@ int AdvancedThreading_Unmanaged::ForkImpl()
         
         // Save CS:EIP for far jmp
         mov copy.CS, CS
-        mov copy.EIP, offset Label0
+        mov copy.EIP, offset JmpPointOnMethodsChainCallEmulation
 
         // Save mark for this method, from what place it was called
         push 0
     }
-Label0:
+
+JmpPointOnMethodsChainCallEmulation:
+
     __asm pop info
         
     if(info != 0)
     {
-        copy.ESP = info->ESP;
         __asm
         {
-            mov ESP, copy.ESP
-
             // return 1 emulation
             pop EBP
             mov EAX, 1
@@ -102,16 +101,7 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     short CS_EIP[3];
 
     // Save original registers to restore
-    _asm  
-    {
-        push EAX
-        push EBX
-        push ECX
-        push EDX
-
-        push ESI
-        push EDI
-    }
+    __asm pushad
 
     // safe copy w-out changing registers
     for(int i = 0; i < sizeof(StackInfo); i++)
@@ -127,11 +117,12 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     int end = beg + size;
     int baseFrom = (int) copy.origStackStart;
     int baseTo = baseFrom + (int)copy.origStackSize;
-    
-    __asm mov copy.ESP, ESP
+    int ESPr;
+
+    __asm mov ESPr, ESP
 
     // target = EBP[ - locals - EBP - ret - whole stack frames copy]
-    int targetToCopy = copy.ESP - 8 - size;
+    int targetToCopy = ESPr - 8 - size;
 
     // offset between parent stack and current stack;
     int delta_to_target = (int)targetToCopy - (int)copy.EBP;
@@ -164,7 +155,8 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     CHECKREF(ESI);
     CHECKREF(EDI);
 
-    __asm push offset Label0
+    // prepare for __asm nret
+    __asm push offset RestorePointAfterClonnedExited
     __asm push EBP
     
     for(int i = (size >> 2) - 1; i >= 0; i--)
@@ -173,9 +165,6 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
         __asm push val;
     };
     
-    stackCopy->EBP = targetToCopy;
-    stackCopy->ESP = targetToCopy;
-
     // restore registers, push 1 for Fork() and jmp
     _asm {        
         push copy.EAX
@@ -190,24 +179,14 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
         pop ECX
         pop EBX
         pop EAX
-                
-        push stackCopy
+        push 1
         jmp fword ptr CS_EIP
     }
 
-Label0:
-    
-    // Restore original registers
-    _asm  
-    {
-        pop EDI
-        pop ESI
+RestorePointAfterClonnedExited:
 
-        pop EDX
-        pop ECX
-        pop EBX
-        pop EAX
-    }
+    // Restore original registers
+    __asm popad
 
     return;
  }
