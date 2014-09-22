@@ -67,5 +67,5 @@ Refl ctor call / newobj:          8,045278 (higher is slower)   <--- using refle
 Please feel free to add new bugs to our issue tracker (github's tracker)
 
   * Now not all samples work correct on x64 platform
-  * Fork.Clone() fixes all registers. So if caller method have Integer with value in stack addresses range, it will be "fixed" for clonned thread. Its because of fast-call, where first 2 parameters going through stack.
   * Fork.Clone() is only for x86 (32-bit).
+  * To use Fork.Clone() you should disable pInvokeStackInbalance check in debugger assistance options (http://msdn.microsoft.com/en-us/library/0htdy0k3(v=vs.110).aspx). This check catches manual therad stack editing.
