@@ -9,9 +9,9 @@ extern "C" __declspec(dllexport)
 
 #define CHECKREF(REG) if((copy.REG >= baseFrom) && (copy.REG <= baseTo)) copy.REG += delta_to_target;
 
+
 int AdvancedThreading_Unmanaged::ForkImpl()
 {
-    int threadpool = 0;
     StackInfo copy;
     StackInfo* info;  
 
@@ -64,8 +64,8 @@ NonClonned:
     //
     //  We need to copy stack part from our method to user code method including its locals in stack
     //
-    int localsStart = copy.EBP;                         // our EBP points to EBP value for parent method
-    int localsEnd = *(int *)curptr;                     // points to end of user's method's locals (additional leave)
+    int localsStart = copy.EBP;                             // our EBP points to EBP value for parent method + saved ESI, EDI
+    int localsEnd = *(int *)curptr;                         // points to end of user's method's locals (additional leave)
     
     byte *arr = new byte[localsEnd - localsStart];
     memcpy(arr, (void*)localsStart, localsEnd - localsStart);
@@ -112,7 +112,6 @@ void AdvancedThreading_Unmanaged::InForkedThread(StackInfo * stackCopy)
     // calculate ranges
     int beg = (int)copy.frame;
     int size = copy.size;    
-    int end = beg + size;
     int baseFrom = (int) copy.origStackStart;
     int baseTo = baseFrom + (int)copy.origStackSize;
     int ESPr;

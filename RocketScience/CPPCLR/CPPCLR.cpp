@@ -27,7 +27,7 @@ namespace AdvancedThreading
 
             // additionally we pass current stack top address to calculate # of frames to save
             helper->stacktop = (int)(int *)&somevalue;
-            bool forked = helper->ForkImpl();
+            int forked = helper->ForkImpl();
             if(!forked)
             {
                 resetEvent->WaitOne();
@@ -35,7 +35,7 @@ namespace AdvancedThreading
             {
                 resetEvent->Set();
             }
-            return forked;
+            return (bool)forked;
         }
 
     internal:

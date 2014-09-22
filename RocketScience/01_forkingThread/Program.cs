@@ -12,7 +12,6 @@
     public static class Program
     {
         static readonly object Sync = new object();
-        static readonly CountdownEvent joined = new CountdownEvent(2);
 
         static void Main()
         {
@@ -24,9 +23,7 @@
             var i = 0;
             for (; i < 20; i++)
             {
-                joined.Reset(2);
                 MakeFork();
-                joined.Wait();
             }
 
             Console.WriteLine("Fork called successfully {0} times", i);
@@ -35,25 +32,23 @@
 
         static void MakeFork()
         {
-            var cdevent = new CountdownEvent(2);
+            //var cdevent = new CountdownEvent(2);
             var sameLocalVariable = 123;
             var stopwatch = Stopwatch.StartNew();
 
             // Splitting current thread flow to two threads
             var forked = Fork.CloneThread();
 
-            lock (Sync)
+            lock(Sync)
             {
                 Console.WriteLine("in {0} thread: {1}, local value: {2}, time to enter = {3} ms",
                     forked ? "forked" : "parent",
                     Thread.CurrentThread.ManagedThreadId,
-                    sameLocalVariable, 
+                    sameLocalVariable,
                     stopwatch.ElapsedMilliseconds);
-                cdevent.Signal();
             }
-
+            
             // Here forked thread's life will be stopped
-            joined.Signal();
         }
     }
 }
