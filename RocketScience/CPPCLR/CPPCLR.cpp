@@ -62,7 +62,8 @@ namespace AdvancedThreading
         {
             ForkData^ data = (ForkData^) state;
             data->helper->InForkedThread(data->info);
-        }
+
+		}
 
     private:
 

@@ -18,7 +18,7 @@ int AdvancedThreading_Unmanaged::ForkImpl()
     // Save ALL registers
     _asm 
     {
-        mov copy.EAX, EAX
+	    mov copy.EAX, EAX
         mov copy.EBX, EBX
         mov copy.ECX, ECX
         mov copy.EDX, EBX
@@ -37,21 +37,19 @@ int AdvancedThreading_Unmanaged::ForkImpl()
 
 JmpPointOnMethodsChainCallEmulation:
 
-    __asm pop info
-        
-    if(info != 0)
-    {
-        __asm
-        {
-            // return 1 emulation
-            pop EBP
-            mov EAX, 1
-            ret
-        }
-        return 1;  // can be changed to jmp by compiler
-    }
+    _asm 
+	{
+		pop EAX
+		cmp EAX, 0
+		je NonClonned
+		
+		pop EBP
+		mov EAX, 1
+		ret
+	}
+NonClonned:
 
-    int *curptr = (int *)copy.EBP;
+	int *curptr = (int *)copy.EBP;
     int frames = 0;
 
     //
@@ -187,7 +185,6 @@ RestorePointAfterClonnedExited:
 
     // Restore original registers
     __asm popad
-
     return;
  }
 

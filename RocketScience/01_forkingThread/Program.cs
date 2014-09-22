@@ -22,7 +22,7 @@
             Console.WriteLine("Splitting to thread pool:");
 
             var i = 0;
-            for (; i < 200; i++)
+            for (; i < 20; i++)
             {
                 joined.Reset(2);
                 MakeFork();
