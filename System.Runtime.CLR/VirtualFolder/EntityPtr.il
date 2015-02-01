@@ -83,6 +83,16 @@
 		ret
 	} // end of method Converter::ToInstance
 
+        .method public hidebysig static
+                !!TType CastRef<TType> (
+                        object input
+                ) cil managed
+        {
+               .maxstack 2
+               ldarg.0
+               ret
+        }
+
 	.method public hidebysig static 
 		!!TType ToInstanceWithOffset<TType> (
 			native int input
