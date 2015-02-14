@@ -11,3 +11,5 @@ CLRTests.opensdf
 CLRTests.v11.suo
 RocketScience/CPPCLR/Release/
 Release/
+*.sdf
+Basic/01_allocOnStack/app.config
