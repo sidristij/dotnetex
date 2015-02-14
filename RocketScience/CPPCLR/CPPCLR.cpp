@@ -13,23 +13,21 @@ using namespace System::Threading;
 
 namespace AdvancedThreading
 {
-
     static public ref class Fork
     {
-        // for unmanaged work with stack and so on
-        static AdvancedThreading_Unmanaged* helper;
-        static ManualResetEvent^ resetEvent;
-        static bool scheduleInThreadPool;
 
     public:
         
-        [MethodImpl(MethodImplOptions::NoInlining)]
-        static bool CloneThread([DefaultParameterValue(false)] bool threadpool)
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
+        static bool CloneThread()
         {
-            scheduleInThreadPool = threadpool;
-            resetEvent = gcnew ManualResetEvent(false);
-            helper = new AdvancedThreading_Unmanaged();
-            bool forked = helper->ForkImpl();
+            ManualResetEvent^ resetEvent = gcnew ManualResetEvent(false);
+            AdvancedThreading_Unmanaged *helper = new AdvancedThreading_Unmanaged();
+            int somevalue;
+
+            // additionally we pass current stack top address to calculate # of frames to save
+            helper->stacktop = (int)(int *)&somevalue;
+            int forked = helper->ForkImpl();
             if(!forked)
             {
                 resetEvent->WaitOne();
@@ -37,33 +35,39 @@ namespace AdvancedThreading
             {
                 resetEvent->Set();
             }
-            return forked;
+            return (bool)forked;
         }
 
     internal:
 
-        static void MakeThread(StackInfo *stackCopy)
+        ref class ForkData
         {
-            if(scheduleInThreadPool)
-            {
-                ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThreadPool), gcnew IntPtr(stackCopy));
-            }
-            else
-            {
-                Thread^ thread = gcnew Thread(gcnew ParameterizedThreadStart(&InForkedThread));
-                thread->Start(gcnew IntPtr(stackCopy));
-            }
+        public:
+            AdvancedThreading_Unmanaged *helper;
+            StackInfo *info;
+        };
+
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
+        static void MakeThread(AdvancedThreading_Unmanaged *helper, StackInfo *stackCopy)
+        {
+            ForkData^ data = gcnew ForkData();
+            data->helper = helper;
+            data->info = stackCopy;
+
+            ThreadPool::QueueUserWorkItem(gcnew WaitCallback(&InForkedThread), data);            
         }
          
-        static void InForkedThreadPool(Object^ state)
-        {
-			helper->InForkedThread(reinterpret_cast<StackInfo *>(((IntPtr ^)state)->ToPointer()));
-        }
-         
+        [MethodImpl(MethodImplOptions::NoInlining | MethodImplOptions::NoOptimization | MethodImplOptions::PreserveSig)]
         static void InForkedThread(Object^ state)
         {
-			helper->InForkedThread(reinterpret_cast<StackInfo *>(((IntPtr ^)state)->ToPointer()));
-        }
+            ForkData^ data = (ForkData^) state;
+            data->helper->InForkedThread(data->info);
+
+		}
+
+    private:
+
+        static int calldeep;
     };
 }
 
@@ -71,9 +75,9 @@ namespace AdvancedThreading
 //  Special wapper to enable managed method call from unmanaged method
 //
 extern "C" __declspec(dllexport)
-void __stdcall MakeManagedThread(StackInfo *stackCopy) 
+void __stdcall MakeManagedThread(AdvancedThreading_Unmanaged *helper, StackInfo *stackCopy) 
 {
-    AdvancedThreading::Fork::MakeThread(stackCopy);
+    AdvancedThreading::Fork::MakeThread(helper, stackCopy);
 }
 
 

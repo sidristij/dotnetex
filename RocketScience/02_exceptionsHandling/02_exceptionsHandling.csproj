@@ -54,7 +54,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CPPCLR\CPPCLR.vcxproj">
       <Project>{6453CD0A-9EBC-4B1F-A200-0EAEAD50091C}</Project>
-      <Name>CPPCLR</Name>
+      <Name>AdvancedThreadingNative</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -5,6 +5,10 @@
     using System.Threading;
     using AdvancedThreading;
     
+    /// <summary>
+    /// This sample shows how to clone existing thread flow to another.
+    /// Note: Method, which calls Clone() should not contain ref/out parameters, because they makes stack references in stack, which shouldn't be fixed. 
+    /// </summary>
     public static class Program
     {
         static readonly object Sync = new object();
@@ -14,35 +18,36 @@
             Console.WriteLine("Press [Enter] to start");
             Console.ReadKey();
 
-            Console.WriteLine("Splitting to new thread:");
-            MakeFork(false);
-
             Console.WriteLine("Splitting to thread pool:");
-            MakeFork(true);
-            
-            Console.WriteLine("Fork called successfully");
+
+            var i = 0;
+            for (; i < 20; i++)
+            {
+                MakeFork();
+            }
+
+            Console.WriteLine("Fork called successfully {0} times", i);
             Console.ReadKey();
         }
 
-        static void MakeFork(bool inThreadpool)
+        static void MakeFork()
         {
-            var cdevent = new CountdownEvent(2);
+            //var cdevent = new CountdownEvent(2);
             var sameLocalVariable = 123;
             var stopwatch = Stopwatch.StartNew();
 
             // Splitting current thread flow to two threads
-            var forked = Fork.CloneThread(inThreadpool);
+            var forked = Fork.CloneThread();
 
-            lock (Sync)
+            lock(Sync)
             {
                 Console.WriteLine("in {0} thread: {1}, local value: {2}, time to enter = {3} ms",
                     forked ? "forked" : "parent",
                     Thread.CurrentThread.ManagedThreadId,
-                    sameLocalVariable, 
+                    sameLocalVariable,
                     stopwatch.ElapsedMilliseconds);
-                cdevent.Signal();
             }
-
+            
             // Here forked thread's life will be stopped
         }
     }

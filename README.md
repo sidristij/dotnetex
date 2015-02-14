@@ -20,6 +20,31 @@ Also contains examples to resolve .Net objects in virtual memory and fork() meth
 > will compute sum of objects, which are allocated by callSomeMethodOrJustCodeBlock();
 
 ```csharp
+  static void MakeFork()
+  {
+      var sameLocalVariable = 123;
+      var stopwatch = Stopwatch.StartNew();
+
+      // Splitting current thread flow to two threads
+      var forked = Fork.CloneThread();
+
+      lock (Sync)
+      {
+          Console.WriteLine("in {0} thread: {1}, local value: {2}, time to enter = {3} ms",
+              forked ? "forked" : "parent",
+              Thread.CurrentThread.ManagedThreadId,
+              sameLocalVariable, 
+              stopwatch.ElapsedMilliseconds);
+      }
+
+      // Here forked thread's life will be stopped
+      joined.Signal();
+  }
+```
+
+Will make new thread, which will start its flow on Fork.CLone() call and will stop on caller's method exit.
+
+```csharp
   var heap = new UnmanagedHeap<Foo>(100);
   var obj = heap.Allocate();
   
@@ -40,3 +65,7 @@ Refl ctor call / newobj:          8,045278 (higher is slower)   <--- using refle
 # Bugs
 
 Please feel free to add new bugs to our issue tracker (github's tracker)
+
+  * Now not all samples work correct on x64 platform
+  * Fork.Clone() is only for x86 (32-bit).
+  * To use Fork.Clone() you should disable pInvokeStackInbalance check in debugger assistance options (http://msdn.microsoft.com/en-us/library/0htdy0k3(v=vs.110).aspx). This check catches manual thread stack editing.

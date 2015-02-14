@@ -70,8 +70,7 @@ namespace System.Runtime.CLR
             {
                 return GetMethodAddress20SP2(method);
             }
-            
-            
+
             unsafe
             {
                 // Skip these
@@ -107,6 +106,10 @@ namespace System.Runtime.CLR
                 if (IsNet20Sp2OrGreater())
                 {
                     RuntimeHelpers.PrepareMethod(handle);
+                    return handle.GetFunctionPointer();
+                }
+                else
+                {
                     if (IntPtr.Size == 8)
                     {
                         var address = (ulong*)ptr;
@@ -120,34 +123,28 @@ namespace System.Runtime.CLR
                         return new IntPtr(address + 12);
                     }
                 }
-                
-                if (IntPtr.Size == 8)
-                {
-                    var address = (ulong*)ptr;
-                    address += 6;
-                    return new IntPtr(address);
-                }
-                else
-                {
-                    var address = (uint*)ptr;
-                    address += 6;
-                    return new IntPtr(address);
-                }
             }
         }
 
         private static RuntimeMethodHandle GetDynamicMethodRuntimeHandle(MethodBase method)
         {
-            if (method is DynamicMethod)
+            RuntimeMethodHandle handle;
+
+            if (Environment.Version.Major == 4)
             {
-                var fieldInfo = typeof(DynamicMethod).GetField("m_method",BindingFlags.NonPublic|BindingFlags.Instance);
-                var handle = ((RuntimeMethodHandle)fieldInfo.GetValue(method));
-                
-                return handle;
+                MethodInfo getMethodDescriptorInfo = typeof(DynamicMethod).GetMethod("GetMethodDescriptor",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                handle = (RuntimeMethodHandle)getMethodDescriptorInfo.Invoke(method, null);
             }
-            return method.MethodHandle;
+            else
+            {
+                FieldInfo fieldInfo = typeof(DynamicMethod).GetField("m_method", BindingFlags.NonPublic | BindingFlags.Instance);
+                handle = ((RuntimeMethodHandle)fieldInfo.GetValue(method));
+            }
+
+            return handle;
         }
-        
+
         private static IntPtr GetMethodAddress20SP2(MethodBase method)
         {
             unsafe
@@ -155,7 +152,7 @@ namespace System.Runtime.CLR
                 return new IntPtr(((int*)method.MethodHandle.Value.ToPointer() + 2));
             }
         }
-        
+
         private static bool MethodSignaturesEqual(MethodBase x, MethodBase y)
         {
             if (x.CallingConvention != y.CallingConvention)
@@ -187,8 +184,13 @@ namespace System.Runtime.CLR
         }
         private static bool IsNet20Sp2OrGreater()
         {
-                return Environment.Version.Major == FrameworkVersions.Net20SP2.Major &&
-                    Environment.Version.MinorRevision >= FrameworkVersions.Net20SP2.MinorRevision;
+            if (Environment.Version.Major == 4)
+            {
+                return true;
+            }
+
+            return Environment.Version.Major == FrameworkVersions.Net20SP2.Major &&
+                Environment.Version.MinorRevision >= FrameworkVersions.Net20SP2.MinorRevision;
         }
     }
 }
