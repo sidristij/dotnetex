@@ -13,5 +13,3 @@ RocketScience/CPPCLR/Release/
 Release/
 *.sdf
 Basic/01_allocOnStack/app.config
-packages
-packages/*
