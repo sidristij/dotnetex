@@ -14,7 +14,9 @@ namespace IocSample
 
                 Console.WriteLine("calling method without proxy: {0}", serviceProvider);
                 Console.WriteLine("Current domain assemblies: {0}",
-                                  string.Join(",  ", AppDomain.CurrentDomain.GetAssemblies().Select(asm => asm.GetName().Name).ToArray()));
+                                  string.Join("\r\n", AppDomain.CurrentDomain.GetAssemblies().Select(asm => asm.GetName().Name).ToArray()));
+
+                Console.ReadKey();
             }
         }
     }

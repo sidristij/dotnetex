@@ -15,6 +15,8 @@
         [DllImport("msvcrt.dll", SetLastError = false)]
         public static extern IntPtr memcpy(IntPtr dest, IntPtr src, int count);
 
+        [DllImport("msvcrt.dll", SetLastError = false)]
+        public static extern IntPtr memset(IntPtr dest, int c, int count);
 
         [DllImport(Kernel32, SetLastError = true)]
         public unsafe static extern IntPtr VirtualQuery(

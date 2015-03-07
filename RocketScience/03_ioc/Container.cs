@@ -7,9 +7,9 @@ namespace IocSample
     
     public class Container : IDisposable
     {
-        private AppDomainRunner appdomain;
+        private readonly AppDomainRunner appdomain;
 
-        private Dictionary<Type, Object> instances = new Dictionary<Type, object>(); 
+        private readonly Dictionary<Type, Object> instances = new Dictionary<Type, object>(); 
 
         public Container(string assemblyName)
         {
@@ -18,7 +18,7 @@ namespace IocSample
 
         public void Register<TInterface>(string fullTypeName)
         {
-            instances.Add(typeof (TInterface), EntityPtr.ToInstance<Object>(appdomain.CreateInstance(fullTypeName)));
+            instances.Add(typeof (TInterface), appdomain.CreateInstance(fullTypeName));
         }
 
         public TInterface Resolve<TInterface>()

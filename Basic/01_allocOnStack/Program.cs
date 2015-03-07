@@ -1,49 +1,35 @@
-﻿namespace AllocOnStackSample
+﻿using System;
+using System.Runtime.CLR;
+namespace AllocOnStackSample
 {
-    using System;
-    using System.Runtime.CLR;
 
     class Program
     {
         /// <summary>
         /// Simple class with overrided method
         /// </summary>
-        private class Customer
+        public class Customer
         {
-            public int x;
-            public int y;
-
-            public override string ToString()
+            public virtual void M1()
             {
-                return string.Format("x: {0}, y: {1}", x, y);
+
+            }
+            public virtual void M2()
+            {
+
+            }
+            public virtual string M3()
+            {
+                return "ahahah, prekrati";
             }
         }
 
         static unsafe void Main(string[] args)
         {
-            // alloc unsafe array on stack
-            var data = stackalloc int[10];
+            var obj = new Customer();
+            var addr = EntityPtr.ToPointer(obj);
 
-            // cast to Customer
-            var customerOnStack = EntityPtr.ToInstance<Customer>((IntPtr)data);
-
-            // Setup type on memory
-            customerOnStack.SetType<Customer>();
-
-            // init with fields
-            customerOnStack.x = 5;
-            customerOnStack.y = 10;
-
-            // copy locally to display
-            var arr = new int[10];
-            for (var i = 0; i < 10; i++)
-            {
-                arr[i] = data[i];
-            }
-
-            // print contents via .ToString()
-            Console.WriteLine("data: {0}", String.Join(", ", arr));
-            Console.WriteLine(customerOnStack);
+            Console.WriteLine(addr);
             Console.ReadKey();
         }
     }
