@@ -159,7 +159,7 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
     #endregion
 
     #region Properties
-    public int SharedMemoryBaseSize => sharedMemoryBaseSize;
+    public int SharedMemoryBaseSize { get { return sharedMemoryBaseSize; } }
 
     #endregion
 

@@ -25,6 +25,9 @@
             IntPtr sizeOfBuffer
         );
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr VirtualAlloc(IntPtr lpAddress, IntPtr dwSize, uint flAllocationType, uint flProtect);
+
         [StructLayout(LayoutKind.Sequential)]
         public unsafe struct MEMORY_BASIC_INFORMATION
         {
