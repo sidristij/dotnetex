@@ -52,7 +52,7 @@
         {
             public ProxyStruct(int addr)
             {
-                opcode = 0xe8;
+                opcode = 0xe9;
                 this.addr = addr;
             }
 

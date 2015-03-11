@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F3B33A80-7C28-4770-AA95-151749303D43}</ProjectGuid>
+    <ProjectGuid>{890270A3-C3CB-49B6-BC90-277F7C17600F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>_04_sharedMemory</RootNamespace>
-    <AssemblyName>04_sharedMemory</AssemblyName>
+    <RootNamespace>_09_directCastPerf</RootNamespace>
+    <AssemblyName>09_directCastPerf</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -21,7 +21,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,11 +33,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BenchmarkDotNet">
+      <HintPath>..\..\packages\BenchmarkDotNet.0.5.2\lib\net35\BenchmarkDotNet.dll</HintPath>
+    </Reference>
     <Reference Include="EntityPtr">
       <HintPath>..\..\libs\EntityPtr.dll</HintPath>
-    </Reference>
-    <Reference Include="SharedMemory">
-      <HintPath>..\..\packages\SharedMemory.1.1.4\lib\net40\SharedMemory.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -54,17 +53,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\System.Runtime.CLR\System.Runtime.CLR.csproj">
-      <Project>{e3bc3ae5-c2ab-442e-b649-c37e7982207e}</Project>
-      <Name>System.Runtime.CLR</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\04_sharedMemoryLib\04_sharedMemoryLib.csproj">
-      <Project>{d50234b1-b91e-4caf-b07b-81ea4de958e7}</Project>
-      <Name>04_sharedMemoryLib</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
