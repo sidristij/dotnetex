@@ -116,21 +116,21 @@
         }
 
         [MethodImpl(MethodImplOptions.NoOptimization)]
-        private void SetObject(A obj)
+        private void SetObject(A a)
         {
-            this.obj = obj;
+            obj = a;
         }
 
         [MethodImpl(MethodImplOptions.NoOptimization)]
-        private void SetObject(B obj)
+        private void SetObject(B b)
         {
-            this.obj = obj;
+            obj = b;
         }
 
         [MethodImpl(MethodImplOptions.NoOptimization)]
-        private void SetObject(E obj)
+        private void SetObject(E e)
         {
-            this.obj = obj;
+            obj = e;
         }
     }
 }
