@@ -7,7 +7,8 @@
 
     public class FixedAddressTypesMap
     {
-        private IntPtr ptr, lastPtr;
+        private readonly IntPtr ptr;
+        private IntPtr lastPtr;
         private Dictionary<Type, IntPtr> addresses = new Dictionary<Type, IntPtr>();
 
         public FixedAddressTypesMap(uint address)
@@ -16,8 +17,13 @@
             lastPtr = ptr;
         }
 
-        public unsafe IntPtr AddType<TType>()
+        public unsafe SharedTypeHolder<TType> GetOrAddType<TType>()
         {
+            if (addresses.ContainsKey(typeof (TType)))
+            {
+                return new SharedTypeHolder<TType>(addresses[typeof (TType)]);
+            }
+
             var mt = (MethodTableInfo *)(typeof (TType).TypeHandle.Value);
             var structsize = Marshal.SizeOf(typeof (MethodTableInfo));
             var size = structsize;
@@ -26,9 +32,9 @@
 
             var newmt = lastPtr;
             WinApi.memcpy(newmt, (IntPtr)mt, size);
-            lastPtr += structsize;
+            lastPtr = (IntPtr)((int)lastPtr + structsize);
             var newvmt_addr = (int *)lastPtr;
-            lastPtr += vmt_size;
+            lastPtr = (IntPtr)((int)lastPtr + vmt_size);
 
             var proxiesFrom = (int *)((byte *)mt + structsize);
             var proxiesTo = (ProxyStruct *)lastPtr;
@@ -41,10 +47,12 @@
                 newvmt_addr[index] = (int) &proxiesTo[index] ;
             }
 
-            lastPtr += mt->VirtMethodsCount * 5;
+            lastPtr = (IntPtr)((int)lastPtr + mt->VirtMethodsCount * 5);
             addresses.Add(typeof(TType), newmt);
 
-            return newmt;
+            ((MethodTableInfo*) newmt)->ParentTable = mt; // support inheristance
+
+            return new SharedTypeHolder<TType>(newmt);
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -54,6 +62,8 @@
             {
                 opcode = 0xe9;
                 this.addr = addr;
+                debug1 = 0xcc;
+                debug2 = 0xcccc;
             }
 
             [FieldOffset(0)]
@@ -61,6 +71,26 @@
 
             [FieldOffset(1)]
             public int addr;
+
+            [FieldOffset(5)] public byte debug1;
+
+            [FieldOffset(6)] public ushort debug2;
+        }
+    }
+
+    public class SharedTypeHolder<T>
+    {
+        private readonly IntPtr methodsTable;
+
+        public SharedTypeHolder(IntPtr methodsTable)
+        {
+            this.methodsTable = methodsTable;
+        }
+
+        public unsafe T AsSharedType(T obj)
+        {
+            *(int*)EntityPtr.ToPointerWithOffset(obj) = (int)methodsTable; // rewrite mt to new
+            return obj;
         }
     }
 }

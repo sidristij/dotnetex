@@ -1,21 +1,22 @@
-﻿using System;
-
-namespace _04_sharedMemoryReciever
+﻿namespace _04_sharedMemoryReciever
 {
+    using System;
     using _04_sharedMemoryLib;
 
     class Program
     {
         static void Main(string[] args)
         {
-            Console.ReadKey();
+            var fixedmap = new FixedAddressTypesMap(0x0017f000);
+            fixedmap.GetOrAddType<SharedType>();
+            
             using (var reciever = new SharedMemoryManager<SharedType>(typeof(SharedType).FullName, 1024))
             using (var sender = new SharedMemoryManager<string>(typeof(string).FullName, 1024))
             {
                     var obj = reciever.ReceiveObject();
-                    var str = string.Format("Recieved: {0}", obj.GetX());
+                    var str = string.Format("Recieved: {0}", obj);
                     Console.WriteLine(str);
-                    sender.SendObject(str);
+                    sender.ShareObject(str);
             }
             Console.ReadKey();
         }

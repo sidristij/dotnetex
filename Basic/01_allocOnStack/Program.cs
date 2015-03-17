@@ -1,6 +1,7 @@
 ﻿namespace AllocOnStackSample
 {
     using System;
+    using System.Collections.Generic;
     using System.Runtime.CLR;
 
     class Program
@@ -31,10 +32,9 @@
 
         static void Main(string[] args)
         {
-            var x = new SubCustomer();
-            var addr = EntityPtr.ToPointer(x).ToInt32();
-            x.M1();
-            Console.WriteLine(x);
+            var x = new Customer();
+            x.SetType<SubCustomer>();
+            Console.WriteLine(x.M1());
         }
     }
 }

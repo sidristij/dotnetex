@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace _04_sharedMemoryLib
+﻿namespace _04_sharedMemoryLib
 {
     public class SharedType
     {
@@ -18,6 +12,11 @@ namespace _04_sharedMemoryLib
         public void SetX(int val)
         {
             x = val;
+        }
+
+        public override string ToString()
+        {
+            return "Surprise, motherfuckers!!";
         }
     }
 }

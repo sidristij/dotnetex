@@ -169,7 +169,7 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
     /// and wait for it to be picked up.
     /// </summary>
     /// <param name="transferObject"> </param>
-    public void SendObject(TransferItemType transferObject)
+    public TransferItemType ShareObject(TransferItemType transferObject)
     {
         try
         {
@@ -180,7 +180,9 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
 
             // Write out the bytes.
             Marshal.WriteInt32(ptrToMemory, typesize);
-            WinApi.memcpy(ptrToMemory + 4, ptr, typesize);
+            WinApi.memcpy((IntPtr)((int)ptrToMemory + 4), ptr, typesize);
+
+            return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr) ((int) ptrToMemory + 4));
         }
         finally
         {
@@ -200,11 +202,9 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
         semaphoreRecieve.WaitOne();
 
         var typesize = Marshal.ReadInt32(ptrToMemory);
-        byte[] bytes = new byte[typesize];
 
         // Read out the bytes for the object.
-        WinApi.memcpy(EntityPtr.ToPointerWithOffset(bytes), ptrToMemory + 4, typesize);
-        return EntityPtr.CastRef<TransferItemType>(bytes);
+        return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr)((int)ptrToMemory + 4));
     }
     #endregion
 }
