@@ -179,10 +179,9 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
             var typesize = transferObject.SizeOf();
 
             // Write out the bytes.
-            Marshal.WriteInt32(ptrToMemory, typesize);
-            WinApi.memcpy((IntPtr)((int)ptrToMemory + 4), ptr, typesize);
+            WinApi.memcpy((IntPtr)((int)ptrToMemory), ptr, typesize);
 
-            return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr) ((int) ptrToMemory + 4));
+            return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr) ((int) ptrToMemory));
         }
         finally
         {
@@ -201,10 +200,8 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
         // Wait on the mutex for an object to be queued by the sender.
         semaphoreRecieve.WaitOne();
 
-        var typesize = Marshal.ReadInt32(ptrToMemory);
-
         // Read out the bytes for the object.
-        return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr)((int)ptrToMemory + 4));
+        return EntityPtr.ToInstanceWithOffset<TransferItemType>((IntPtr)((int)ptrToMemory));
     }
     #endregion
 }

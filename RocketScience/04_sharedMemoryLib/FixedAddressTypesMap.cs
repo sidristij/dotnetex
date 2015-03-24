@@ -44,7 +44,7 @@
             {
                 var slot = new ProxyStruct(proxiesFrom[index] - ((int)&proxiesTo[index] + 5));
                 proxiesTo[index] = slot;
-                newvmt_addr[index] = (int) &proxiesTo[index] ;
+                newvmt_addr[index] = (int) &proxiesTo[index];
             }
 
             lastPtr = (IntPtr)((int)lastPtr + mt->VirtMethodsCount * 5);
@@ -72,9 +72,9 @@
             [FieldOffset(1)]
             public int addr;
 
-            [FieldOffset(5)] public byte debug1;
+            [FieldOffset(5)] public byte debug1;    // 0xcc
 
-            [FieldOffset(6)] public ushort debug2;
+            [FieldOffset(6)] public ushort debug2;  // 0xcccc
         }
     }
 

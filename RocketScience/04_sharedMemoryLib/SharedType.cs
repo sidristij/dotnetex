@@ -16,7 +16,7 @@
 
         public override string ToString()
         {
-            return "Surprise, motherfuckers!!";
+            return "Surprise!!";
         }
     }
 }
