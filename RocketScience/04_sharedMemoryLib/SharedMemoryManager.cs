@@ -180,7 +180,7 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
 
             // Write out the bytes.
             Marshal.WriteInt32(ptrToMemory, typesize);
-            WinApi.memcpy(ptrToMemory + 4, ptr, typesize);
+            WinApi.memcpy((IntPtr)((int)ptrToMemory + 4), ptr, typesize);
         }
         finally
         {
@@ -203,7 +203,7 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
         byte[] bytes = new byte[typesize];
 
         // Read out the bytes for the object.
-        WinApi.memcpy(EntityPtr.ToPointerWithOffset(bytes), ptrToMemory + 4, typesize);
+        WinApi.memcpy(EntityPtr.ToPointerWithOffset(bytes), (IntPtr)((int)ptrToMemory + 4), typesize);
         return EntityPtr.CastRef<TransferItemType>(bytes);
     }
     #endregion
