@@ -28,7 +28,7 @@
             }
         }
 
-        const int N = 50001, Iter = 71;
+        const int N = 50001, Iter = 701;
         readonly UnmanagedHeap<Customer> heap = new UnmanagedHeap<Customer>(N);
 
         [Benchmark("Ctor call via reflection (on already allocated memory)")]
