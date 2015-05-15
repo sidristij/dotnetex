@@ -1,9 +1,12 @@
-﻿namespace UnmanagedPoolPerfSample
+﻿using BenchmarkDotNet.Tasks;
+
+namespace UnmanagedPoolPerfSample
 {
     using System;
     using System.Runtime.CLR;
     using BenchmarkDotNet.Attributes;
 
+    [Task(platform: BenchmarkPlatform.X86, jitVersion: BenchmarkJitVersion.LegacyJit)]
     public class Competition
     {
         public class Customer : UnmanagedObject<Customer>

@@ -1,18 +1,23 @@
-﻿namespace AppDomainsSample
+﻿using System.Collections.Generic;
+
+namespace AppDomainsSample
 {
     using System;
-    using System.Linq.Expressions;
     using System.Runtime.CLR;
     using System.Security;
     using System.Security.Permissions;
 
     public class AppDomainRunner : MarshalByRefObject
     {
+        public class A
+        {
+        }
+
         private void methodInsideAppDomain(string str)
         {
             object tmp = str;
-            var act = (Action)tmp;
-            act();
+            var act = EntityPtr.CastRef<List<A>>(tmp);
+            Console.WriteLine(act.Count);
         }
 
         public static void Go(string startingIntPtr)
@@ -39,9 +44,9 @@
     {
         static void Main(string[] args)
         {
-            Expression<Action> expression = () => Console.WriteLine("Surprise!");
+            var lst = new List<AppDomainRunner.A> {new AppDomainRunner.A()};
 
-            AppDomainRunner.Go(EntityPtr.CastRef<string>(expression.Compile()));
+            AppDomainRunner.Go(EntityPtr.CastRef<string>(lst));
 
             Console.ReadKey();
         }

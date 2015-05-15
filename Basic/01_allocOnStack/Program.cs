@@ -1,7 +1,8 @@
-﻿using System;
-using System.Runtime.CLR;
-namespace AllocOnStackSample
+﻿namespace AllocOnStackSample
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.CLR;
 
     class Program
     {
@@ -10,26 +11,30 @@ namespace AllocOnStackSample
         /// </summary>
         public class Customer
         {
-            public virtual void M1()
+            public virtual string M1()
             {
-
-            }
-            public virtual void M2()
-            {
-
-            }
-            public virtual string M3()
-            {
-                return "ahahah, prekrati";
+                return "M1::base";
             }
         }
 
-        static unsafe void Main(string[] args)
+        public class SubCustomer : Customer
         {
-            var obj = new Customer();
-            var addr = EntityPtr.ToPointer(obj);
+            public override string M1()
+            {
+                return "M1";
+            }
 
-            Console.WriteLine(addr);
+            public override string ToString()
+            {
+                return "ToString()";
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            var x = new Customer();
+            x.SetType<SubCustomer>();
+            Console.WriteLine(x.M1());
             Console.ReadKey();
         }
     }

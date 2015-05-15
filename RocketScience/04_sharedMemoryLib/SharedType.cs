@@ -13,5 +13,10 @@
         {
             x = val;
         }
+
+        public override string ToString()
+        {
+            return "Surprise!!";
+        }
     }
 }

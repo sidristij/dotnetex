@@ -7,14 +7,21 @@
     {
         static void Main(string[] args)
         {
+            var fixedmap = new FixedAddressTypesMap(0x0032e2000);
+            var holder = fixedmap.GetOrAddType<SharedType>();
+
+            var testobject = new SharedType();
+            Console.WriteLine(testobject.ToString());
+
             using (var sender = new SharedMemoryManager<SharedType>(typeof(SharedType).FullName, 1024))
             using (var reciever = new SharedMemoryManager<string>(typeof(string).FullName, 1024))
             {
-                var tosend = new SharedType();
-                tosend = new SharedType();
+                var tosend = new SharedType();    
                 tosend.SetX(100);
 
-                sender.SendObject(tosend);
+                holder.AsSharedType(tosend);  
+                sender.ShareObject(tosend);
+
                 var obj = reciever.ReceiveObject();
 
                 Console.WriteLine("{0}", obj);

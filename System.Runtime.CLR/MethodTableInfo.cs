@@ -59,9 +59,14 @@ namespace System.Runtime.CLR
         [FieldOffset(24)]
         public ObjectTypeInfo* EEClass;
 
+        [FieldOffset(28)]
+        public void* undefind1;
 
-        [FieldOffset(40)]
-        public IntPtr CtorAddress;
+        [FieldOffset(32)]
+        public void* undefind2;
+
+        [FieldOffset(36)]
+        public void* undefind3;
     }
 
     [StructLayout(LayoutKind.Explicit)]

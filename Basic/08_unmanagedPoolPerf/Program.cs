@@ -1,16 +1,15 @@
-﻿namespace UnmanagedPoolPerfSample
-{
-    using System;
-    using System.Diagnostics;
-    using System.Runtime.CLR;
-    using BenchmarkDotNet;
+﻿using BenchmarkDotNet;
 
+namespace UnmanagedPoolPerfSample
+{
     public class MainClass
     {
         public static void Main(string[] args)
         {
-            var runner = new BenchmarkRunner();
-            runner.RunCompetition(new Competition());
+            var competitionSwitch = new BenchmarkCompetitionSwitch(new[] {
+                typeof(Competition)
+            });
+            competitionSwitch.Run(args);
         }
     }
 }
