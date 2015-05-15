@@ -2,9 +2,9 @@
 {
     using System;
     using System.Runtime.CLR;
-    using BenchmarkDotNet;
+    using BenchmarkDotNet.Attributes;
 
-    public class Competition : BenchmarkCompetition
+    public class Competition
     {
         public class Customer : UnmanagedObject<Customer>
         {
@@ -28,10 +28,10 @@
             }
         }
 
-        const int N = 50001, Iter = 71;
+        const int N = 50001, Iter = 701;
         readonly UnmanagedHeap<Customer> heap = new UnmanagedHeap<Customer>(N);
 
-        [BenchmarkMethod("Ctor call via reflection (on already allocated memory)")]
+        [Benchmark("Ctor call via reflection (on already allocated memory)")]
         public void Reflection()
         {
             for (int j = 0; j < Iter; j++)
@@ -42,7 +42,7 @@
             }
         }
 
-        [BenchmarkMethod("Ctor call via method body ptr redirection")]
+        [Benchmark("Ctor call via method body ptr redirection")]
         public void MethodBodyPtr()
         {
             for (int j = 0; j < Iter; j++)
@@ -53,7 +53,7 @@
             }
         }
 
-        [BenchmarkMethod("Pure allocation in managed memory")]
+        [Benchmark("Pure allocation in managed memory")]
         public void PureAllocation()
         {
             for (int j = 0; j < Iter; j++)
