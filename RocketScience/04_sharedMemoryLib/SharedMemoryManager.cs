@@ -52,9 +52,6 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
 
     private void SetupSharedMemory()
     {
-        SecurityIdentifier sid = new SecurityIdentifier(WellKnownSidType.NullSid, null);   //NULL SID
-        SecurityAttributes security = new SecurityAttributes(IntPtr.Zero);
-
         // Grab some storage from the page file.
         handleFileMapping =
             PInvoke.CreateFileMapping((IntPtr)INVALID_HANDLE_VALUE,
@@ -71,27 +68,25 @@ public class SharedMemoryManager<TransferItemType> : IDisposable
         }
 
         // Check the error status.
-        int retVal = Marshal.GetLastWin32Error();
-        if (retVal == ERROR_ALREADY_EXISTS)
+        var retVal = Marshal.GetLastWin32Error();
+        switch (retVal)
         {
-            // We opened one that already existed.
-            // Make the mutex not the initial owner
-            // of the mutex since we are connecting
-            // to an existing one.
-            semaphoreSend = Semaphore.OpenExisting(string.Format("{0}mtx{1}send", typeof(TransferItemType), memoryRegionName));
-            semaphoreRecieve = Semaphore.OpenExisting(string.Format("{0}mtx{1}recieve", typeof(TransferItemType), memoryRegionName));
-        }
-        else if (retVal == 0)
-        {
-            // We opened a new one.
-            // Make the mutex the initial owner.
-            semaphoreSend = new Semaphore(100, 100, string.Format("{0}mtx{1}send", typeof(TransferItemType), memoryRegionName));
-            semaphoreRecieve = new Semaphore(0, 100, string.Format("{0}mtx{1}recieve", typeof(TransferItemType), memoryRegionName));
-        }
-        else
-        {
-            // Something else went wrong.
-            throw new Win32Exception(retVal, "Error creating file mapping");
+            case ERROR_ALREADY_EXISTS:
+                // We opened one that already existed.
+                // Make the mutex not the initial owner
+                // of the mutex since we are connecting
+                // to an existing one.
+                semaphoreSend = Semaphore.OpenExisting(string.Format("{0}mtx{1}send", typeof(TransferItemType), memoryRegionName));
+                semaphoreRecieve = Semaphore.OpenExisting(string.Format("{0}mtx{1}recieve", typeof(TransferItemType), memoryRegionName));
+                break;
+            case 0:
+                // We opened a new one.
+                // Make the mutex the initial owner.
+                semaphoreSend = new Semaphore(100, 100, string.Format("{0}mtx{1}send", typeof(TransferItemType), memoryRegionName));
+                semaphoreRecieve = new Semaphore(0, 100, string.Format("{0}mtx{1}recieve", typeof(TransferItemType), memoryRegionName));
+                break;
+            default:
+                throw new Win32Exception(retVal, "Error creating file mapping");
         }
 
         // Map the shared memory.

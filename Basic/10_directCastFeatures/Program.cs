@@ -24,7 +24,7 @@
     {
         static void Main(string[] args)
         {
-            ShowSimpleCastExample();
+            //ShowSimpleCastExample();
 
             CastingBetweenIncompatibleTypes();
 

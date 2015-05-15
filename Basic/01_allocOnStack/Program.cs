@@ -35,6 +35,7 @@
             var x = new Customer();
             x.SetType<SubCustomer>();
             Console.WriteLine(x.M1());
+            Console.ReadKey();
         }
     }
 }

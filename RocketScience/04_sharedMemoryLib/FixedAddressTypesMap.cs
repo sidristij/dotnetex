@@ -31,6 +31,7 @@
             size += vmt_size;
 
             var newmt = lastPtr;
+
             WinApi.memcpy(newmt, (IntPtr)mt, size);
             lastPtr = (IntPtr)((int)lastPtr + structsize);
             var newvmt_addr = (int *)lastPtr;

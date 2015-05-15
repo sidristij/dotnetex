@@ -22,7 +22,7 @@
 
     class Competition : BenchmarkCompetition
     {
-        const int Iter = 10000000;
+        const int Iter = 10000001;
         private object obj;
 
         [BenchmarkMethod("JIT provided casting to inherited class deep = 5")]

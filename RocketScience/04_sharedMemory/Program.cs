@@ -7,7 +7,7 @@
     {
         static void Main(string[] args)
         {
-            var fixedmap = new FixedAddressTypesMap(0x0017f000);
+            var fixedmap = new FixedAddressTypesMap(0x0032e2000);
             var holder = fixedmap.GetOrAddType<SharedType>();
 
             var testobject = new SharedType();

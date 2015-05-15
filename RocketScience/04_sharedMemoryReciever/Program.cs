@@ -7,7 +7,7 @@
     {
         static void Main(string[] args)
         {
-            var fixedmap = new FixedAddressTypesMap(0x0017f000);
+            var fixedmap = new FixedAddressTypesMap(0x0032e2000);
             fixedmap.GetOrAddType<SharedType>();
             
             using (var reciever = new SharedMemoryManager<SharedType>(typeof(SharedType).FullName, 1024))

@@ -8,7 +8,7 @@
     
     public class AppDomainRunner : MarshalByRefObject
     {
-        private void methodInsideAppDomain()
+        private void MethodInsideAppDomain()
         {
             var startObj = new object();
 
@@ -23,7 +23,8 @@
                     foreach (var obj in GCEx.GetObjectsInSOH(startObj, mt => mt != 0))
                     {
                         Console.WriteLine(" - object: {0}, type: {1}, size: {2}", obj.Item, obj.Item.GetType().Name, obj.Item.SizeOf());
-                        if (obj.Item is List<int>) catched = (List<int>)obj.Item;
+                        var ints = obj.Item as List<int>;
+                        if (ints != null) catched = ints;
                     }
 
                     // Congrats if found
@@ -47,7 +48,7 @@
             var p = (AppDomainRunner)dom.CreateInstanceAndUnwrap(typeof(AppDomainRunner).Assembly.FullName, typeof(AppDomainRunner).FullName);
 
             // enumerate objects from outside area to our appdomain area
-            p.methodInsideAppDomain();
+            p.MethodInsideAppDomain();
         }
     }
 
@@ -55,13 +56,13 @@
     {
         static void Main()
         {
-            Console.ReadKey();
+            Console.ReadLine();
             AppDomainRunner.Go();
 
             var list = new List<int>(10);
             list.AddRange(Enumerable.Range(0, 20));
             
-            Console.ReadKey();
+            Console.ReadLine();
 
             Console.WriteLine(list);
         }
