@@ -9,7 +9,10 @@
     {
         static void Main(string[] args)
         {
-            new Competition().Run();
+            var competitionSwitch = new BenchmarkCompetitionSwitch(new[] {
+                typeof(Competition)
+            });
+            competitionSwitch.Run(new[] { "Competition" });
             Console.ReadKey();
         }
     }
@@ -20,12 +23,12 @@
     internal class D : C { }
     internal class E : D { }
 
-    class Competition : BenchmarkCompetition
+    public class Competition
     {
         const int Iter = 10000001;
         private object obj;
 
-        [BenchmarkMethod("JIT provided casting to inherited class deep = 5")]
+        [Benchmark("JIT provided casting to inherited class deep = 5")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void JitProvidedFar()
         {
@@ -37,7 +40,7 @@
             }
         }
 
-        [BenchmarkMethod("JetCast casting to inherited class deep = 5")]
+        [Benchmark("JetCast casting to inherited class deep = 5")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void CastRefProvidedFar()
         {
@@ -49,7 +52,7 @@
             }
         }
 
-        [BenchmarkMethod("JIT provided casting to inherited class deep = 2")]
+        [Benchmark("JIT provided casting to inherited class deep = 2")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void JitProvidedNear()
         {
@@ -61,7 +64,7 @@
             }
         }
 
-        [BenchmarkMethod("JetCast casting to inherited class deep = 2")]
+        [Benchmark("JetCast casting to inherited class deep = 2")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void CastRefProvidedNear()
         {
@@ -73,7 +76,7 @@
             }
         }
 
-        [BenchmarkMethod("JIT provided casting to inherited class deep = 1")]
+        [Benchmark("JIT provided casting to inherited class deep = 1")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void JitProvidedEq()
         {
@@ -85,7 +88,7 @@
             }
         }
 
-        [BenchmarkMethod("JetCast casting to inherited class deep = 1")]
+        [Benchmark("JetCast casting to inherited class deep = 1")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void CastRefProvidedEq()
         {
@@ -97,7 +100,7 @@
             }
         }
 
-        [BenchmarkMethod("No casting")]
+        [Benchmark("No casting")]
         [MethodImpl(MethodImplOptions.NoOptimization)]
         public void NoCast()
         {

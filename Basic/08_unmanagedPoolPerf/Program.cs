@@ -9,7 +9,7 @@ namespace UnmanagedPoolPerfSample
             var competitionSwitch = new BenchmarkCompetitionSwitch(new[] {
                 typeof(Competition)
             });
-            competitionSwitch.Run(args);
+            competitionSwitch.Run(new[] { "Competition" });
         }
     }
 }

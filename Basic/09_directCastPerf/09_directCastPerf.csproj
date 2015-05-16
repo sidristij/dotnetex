@@ -33,8 +33,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="BenchmarkDotNet">
-      <HintPath>..\..\packages\BenchmarkDotNet.0.5.2\lib\net35\BenchmarkDotNet.dll</HintPath>
+    <Reference Include="BenchmarkDotNet, Version=0.7.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\BenchmarkDotNet.0.7.4\lib\net35\BenchmarkDotNet.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="EntityPtr">
       <HintPath>..\..\libs\EntityPtr.dll</HintPath>
@@ -53,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
