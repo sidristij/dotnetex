@@ -7,7 +7,7 @@
     class Program
     {
         /// <summary>
-        /// Simple class with overrided method
+        /// Simple class with overriden method
         /// </summary>
         public class Customer
         {

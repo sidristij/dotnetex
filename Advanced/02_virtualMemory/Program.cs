@@ -16,7 +16,7 @@
         {
             IntPtr heapsOffset, lastHeapByte;
 
-            Console.WriteLine("This proram enumerates all available strings in last ephemeral segment");
+            Console.WriteLine("This program enumerates all available strings in last ephemeral segment");
 
             MemAccessor.GetManagedHeap(out heapsOffset, out lastHeapByte);
 
@@ -25,6 +25,7 @@
             {
                 EnumerateStrings(heapsOffset, lastHeapByte);
             }
+
             Console.ReadKey();
         }
 
